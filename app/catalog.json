@@ -1,0 +1,2138 @@
+{
+  "E38": {
+    "\t1BD000 Slave Cal Block ": [
+      "TO0018",
+      "1"
+    ],
+    "\t1BD800\t": [
+      "TO0019",
+      "1"
+    ],
+    "4WD Configuration": [
+      "TS124",
+      "7"
+    ],
+    "4WD Low - Eng Speed Max": [
+      "TS110",
+      "7"
+    ],
+    "4WD Low - Eng Speed Min": [
+      "TD0020",
+      "3"
+    ],
+    "4WD Low - Throttle Max": [
+      "TD0021",
+      "3"
+    ],
+    "4WD Low - Throttle Min": [
+      "TD0022",
+      "3"
+    ],
+    "4WD Low Hardwire Diagnostics": [
+      "TD0023",
+      "3"
+    ],
+    "4wd Configuration": [
+      "TS029",
+      "7"
+    ],
+    "4wd Low - Eng Speed Max": [
+      "TD0008",
+      "3"
+    ],
+    "4wd Low - Eng Speed Min": [
+      "TD0009",
+      "3"
+    ],
+    "4wd Low - Throttle Max": [
+      "TD0010",
+      "3"
+    ],
+    "4wd Low - Throttle Min": [
+      "TD0011",
+      "3"
+    ],
+    "4wd Low Hardwire Diagnostics": [
+      "TD0016",
+      "3"
+    ],
+    "AC Cycling Request": [
+      "TS017",
+      "7"
+    ],
+    "AC Hardwire Request": [
+      "TS018",
+      "7"
+    ],
+    "AC Present": [
+      "TS019",
+      "7"
+    ],
+    "AC Pressure Sensor Diag": [
+      "TS026",
+      "7"
+    ],
+    "ANA2_Sensor": [
+      "TC0016",
+      "2"
+    ],
+    "Air Con Present": [
+      "TS096",
+      "7"
+    ],
+    "Air Flow System Voltage": [
+      "TO0057",
+      "1"
+    ],
+    "Airflow Scale": [
+      "TO0061",
+      "1"
+    ],
+    "Alternator Min Duty Cycle at Default Action": [
+      "TO0059",
+      "1"
+    ],
+    "Alternator Options - Control Source - A": [
+      "TO0054",
+      "1"
+    ],
+    "Alternator Options - ECM Override BCM - F": [
+      "TO0055",
+      "1"
+    ],
+    "Ambient Air Temp Sensor Avail": [
+      "TC0041",
+      "2"
+    ],
+    "Analog Brake Select": [
+      "TS020",
+      "7"
+    ],
+    "Any Switch Cancel to Default": [
+      "TC0052",
+      "3"
+    ],
+    "Auto Default Fault Gear": [
+      "TG0001",
+      "2"
+    ],
+    "AutoTrans NSBU Present": [
+      "TS041",
+      "7"
+    ],
+    "Automatic Gear Max": [
+      "TS036",
+      "7"
+    ],
+    "Automatic Trans Fitted": [
+      "TS094",
+      "7"
+    ],
+    "Automatic Trans Type": [
+      "TS103",
+      "7"
+    ],
+    "BTM Limits Table": [
+      "TC0195",
+      "2"
+    ],
+    "BaseTrqCalc": [
+      "TC0194",
+      "2"
+    ],
+    "Bass Present": [
+      "TC0165",
+      "2"
+    ],
+    "Bottom Of Travel Switch Fitted": [
+      "TC0006",
+      "2"
+    ],
+    "Boundary Angle": [
+      "TO0040",
+      "1"
+    ],
+    "Box Swap": [
+      "TS044",
+      "7"
+    ],
+    "Brake Booster High Threshold": [
+      "TD0004",
+      "3"
+    ],
+    "Brake Booster Low Threshold": [
+      "TD0003",
+      "3"
+    ],
+    "Brake Booster Sensor Diagnostics": [
+      "TD0002",
+      "3"
+    ],
+    "Brake Booster Sensor Present": [
+      "TC0084",
+      "2"
+    ],
+    "Brake Pdl Pstn Sensor Fitted": [
+      "TS125",
+      "7"
+    ],
+    "Brake Pedal Position Or Man trans Clutch": [
+      "TS118",
+      "7"
+    ],
+    "Brake Torque Limits 1CFD30": [
+      "TO0025",
+      "1"
+    ],
+    "Cam Active Edge": [
+      "TC0127",
+      "2"
+    ],
+    "Cam Correction Enable": [
+      "TC0176",
+      "2"
+    ],
+    "Cam Edge Compensation vs Coolant": [
+      "TC0130",
+      "2"
+    ],
+    "Cam Edge Compensation vs RPM": [
+      "TC0131",
+      "2"
+    ],
+    "Cam Edge Location": [
+      "TC0129",
+      "2"
+    ],
+    "Cam Long Thresholds": [
+      "TC0177",
+      "2"
+    ],
+    "Cam Sensor Type": [
+      "TC0126",
+      "2"
+    ],
+    "Cam Short Thresholds": [
+      "TC0178",
+      "2"
+    ],
+    "Cam Sync Test Rpm": [
+      "TC0155",
+      "2"
+    ],
+    "Cam Teeth Per Revolution": [
+      "TC0128",
+      "2"
+    ],
+    "Cam Time Diagnostic": [
+      "TC0175",
+      "2"
+    ],
+    "CamECC_Fail Limit": [
+      "TC0143",
+      "2"
+    ],
+    "CamECC_FailedTeethMax": [
+      "TC0142",
+      "2"
+    ],
+    "CamECC_Sample Limit": [
+      "TC0144",
+      "2"
+    ],
+    "CamFEB_EdgesMax": [
+      "TC0145",
+      "2"
+    ],
+    "CamFEB_EdgesMin": [
+      "TC0146",
+      "2"
+    ],
+    "CamFEB_MEDRES_Region": [
+      "TC0147",
+      "2"
+    ],
+    "CamFEB_TstLmt": [
+      "TC0151",
+      "2"
+    ],
+    "CamSEB_EdgesMax": [
+      "TC0148",
+      "2"
+    ],
+    "CamSEB_EdgesMin": [
+      "TC0149",
+      "2"
+    ],
+    "CamTB_EdgesMin": [
+      "TC0150",
+      "2"
+    ],
+    "Camshaft Gear Type": [
+      "TC0173",
+      "2"
+    ],
+    "Clch Pos Snsr Diag Enbl": [
+      "TD0005",
+      "3"
+    ],
+    "ClchPosSnsrDiagEnbl": [
+      "TD0001",
+      "3"
+    ],
+    "Closed Loop Integrator Delay vs. Airflow Mode": [
+      "TC0115",
+      "2"
+    ],
+    "Closed Loop Mode vs Airflow": [
+      "TC0116",
+      "2"
+    ],
+    "Closed Loop Proportional Base vs. Airflow Mode": [
+      "TC0111",
+      "2"
+    ],
+    "Closed Loop Proportional Gain vs. O2 Error": [
+      "TC0113",
+      "2"
+    ],
+    "Closed Loop Proportional Limit": [
+      "TC0112",
+      "2"
+    ],
+    "Closed Loop Proportional Mult vs. ECT": [
+      "TC0187",
+      "2"
+    ],
+    "Closed Loop Proportional Multiplier vs. ECT": [
+      "TC0114",
+      "2"
+    ],
+    "Clutch Pedal Position Sensor": [
+      "TC0005",
+      "2"
+    ],
+    "Clutch Pedal Position Sensor Fitted": [
+      "TC0078",
+      "2"
+    ],
+    "Clutch Travel Switch Pull Up Input": [
+      "TC0004",
+      "2"
+    ],
+    "Cmd Delay Timer": [
+      "TC0054",
+      "3"
+    ],
+    "Column Axis Type": [
+      "TC0083",
+      "2"
+    ],
+    "Comp Change Threshold": [
+      "TC0188",
+      "2"
+    ],
+    "Composition Delay Vol": [
+      "TC0189",
+      "2"
+    ],
+    "Composition Delay Volume": [
+      "TC0031",
+      "2"
+    ],
+    "Composition Transition Volume": [
+      "TC0032",
+      "2"
+    ],
+    "Compression Ratio": [
+      "TO0062",
+      "1"
+    ],
+    "Count-DuplicateFramesAllowed": [
+      "TS089",
+      "7"
+    ],
+    "Crank Active Edge": [
+      "TC0134",
+      "2"
+    ],
+    "Crank Decode Limp Mode": [
+      "TC0133",
+      "2"
+    ],
+    "Crank Decode Select": [
+      "TC0132",
+      "2"
+    ],
+    "Crank Fail Engine Sync": [
+      "TC0139",
+      "2"
+    ],
+    "Crank HIRES_PerRev": [
+      "TC0174",
+      "2"
+    ],
+    "Crank Long Thresholds": [
+      "TC0179",
+      "2"
+    ],
+    "Crank Sensor Type": [
+      "TO0063",
+      "1"
+    ],
+    "Crank Sync Percent": [
+      "TC0180",
+      "2"
+    ],
+    "Crank Teeth Per Revolution": [
+      "TC0135",
+      "2"
+    ],
+    "Cranking Delay": [
+      "TS016",
+      "2"
+    ],
+    "CrkEB_CamEdgeLmt": [
+      "TC0152",
+      "2"
+    ],
+    "CrkEB_CrkEdgesMax": [
+      "TC0153",
+      "2"
+    ],
+    "CrkEB_CrkEdgesMin": [
+      "TC0154",
+      "2"
+    ],
+    "Cruise Brake Test": [
+      "TS051",
+      "2"
+    ],
+    "Cruise Common SwMode Select": [
+      "TS028",
+      "2"
+    ],
+    "Cruise ECM SW Diag Enable": [
+      "TS050",
+      "7"
+    ],
+    "Cruise SW Diag Enable": [
+      "TS049",
+      "7"
+    ],
+    "Cruise Switch Architecture": [
+      "TS052",
+      "2"
+    ],
+    "Cruise System Type": [
+      "TS025",
+      "7"
+    ],
+    "CumulL_TermOff": [
+      "TS059",
+      "7"
+    ],
+    "CumulL_TermOffDevCntrl": [
+      "TS060",
+      "7"
+    ],
+    "DC Min": [
+      "TS114",
+      "7"
+    ],
+    "DeacFlapperDelay": [
+      "TS014",
+      "7"
+    ],
+    "Deactivation Fault": [
+      "TS077",
+      "7"
+    ],
+    "Default EcoMode Active": [
+      "TC0050",
+      "3"
+    ],
+    "Default Fault Gear": [
+      "TG0008",
+      "8"
+    ],
+    "Default Time": [
+      "TS055",
+      "7"
+    ],
+    "Design-Level": [
+      "TS129",
+      "7"
+    ],
+    "Disabled Response": [
+      "TS081",
+      "7"
+    ],
+    "Disc Btm Of Trvl Clch Enbl": [
+      "TD0007",
+      "3"
+    ],
+    "Disc Top Of Trvl Clch Enbl": [
+      "TD0006",
+      "3"
+    ],
+    "DiscBtmOfTrvlClchEnbl": [
+      "TD0019",
+      "3"
+    ],
+    "DiscTopOfTrvlClchEnbl": [
+      "TD0018",
+      "3"
+    ],
+    "Downshift Trans Trq Req Limit, 2-1": [
+      "TC0073",
+      "2"
+    ],
+    "Downshift Trans Trq Req Limit, 3-2": [
+      "TC0074",
+      "2"
+    ],
+    "Downshift Trans Trq Req Limit, 4-3": [
+      "TC0075",
+      "2"
+    ],
+    "Downshift Trans Trq Req Limit, 5-4": [
+      "TC0076",
+      "2"
+    ],
+    "Downshift Trans Trq Req Limit, 6-5": [
+      "TC0077",
+      "2"
+    ],
+    "Dual Tanks Present": [
+      "TF0003",
+      "6"
+    ],
+    "E85 Fuel System Present": [
+      "TF0002",
+      "6"
+    ],
+    "ECM OS Number Hex": [
+      "TO0072",
+      "1"
+    ],
+    "ECM OS PN ASCII": [
+      "TO0071",
+      "1"
+    ],
+    "ECM Override": [
+      "TS054",
+      "2"
+    ],
+    "ECM Segment PN's Decimal": [
+      "TO0064",
+      "1"
+    ],
+    "EFV_Present": [
+      "TS009",
+      "7"
+    ],
+    "ETC CAL Scale 1 - Kmh Scale": [
+      "TO0008",
+      "1"
+    ],
+    "ETC CAL Scale 2 TPS/APP? %": [
+      "TO0009",
+      "1"
+    ],
+    "ETC CAL Scale 3 - Limp A": [
+      "TO0010",
+      "1"
+    ],
+    "ETC CAL Scale 4": [
+      "TO0011",
+      "1"
+    ],
+    "ETC CAL Scale 5 - RPM": [
+      "TO0012",
+      "1"
+    ],
+    "ETC CAL Scale 6": [
+      "TO0013",
+      "1"
+    ],
+    "ETC CAL Scale 7": [
+      "TO0014",
+      "1"
+    ],
+    "ETC CAL Scale 8 - VSS-RPM Switch": [
+      "TO0015",
+      "1"
+    ],
+    "ETC CAL-1": [
+      "TO0005",
+      "1"
+    ],
+    "ETC CAL-2": [
+      "TO0006",
+      "1"
+    ],
+    "ETC CAL-3": [
+      "TO0007",
+      "1"
+    ],
+    "ETC Slave Cal Number Hex Source": [
+      "TO0004",
+      "1"
+    ],
+    "ETC Slave Cal PN ASCII Source": [
+      "TO0003",
+      "1"
+    ],
+    "EcoMode Switch Present": [
+      "TC0051",
+      "3"
+    ],
+    "Electrical Architecture": [
+      "TS102",
+      "7"
+    ],
+    "EnblCalInstTrans": [
+      "TC0169",
+      "2"
+    ],
+    "Eng Hi Complexity": [
+      "TC0136",
+      "2"
+    ],
+    "Eng Pstn Deglitch Time": [
+      "TC0158",
+      "2"
+    ],
+    "Eng Running Min": [
+      "TD0012",
+      "3"
+    ],
+    "EngFlapperCntrlMax": [
+      "TS010",
+      "7"
+    ],
+    "EngFlapperCntrlMin": [
+      "TS011",
+      "7"
+    ],
+    "EngOilCond or EngOilLvlLo": [
+      "TC0037",
+      "2"
+    ],
+    "EngOilCondSnsrPresent": [
+      "TC0038",
+      "2"
+    ],
+    "Engine Speed Max": [
+      "TC0064",
+      "2"
+    ],
+    "Engine Speed Minimum": [
+      "TC0063",
+      "2"
+    ],
+    "Engine Speed Scale": [
+      "TO0060",
+      "1"
+    ],
+    "Engine Type": [
+      "TC0124",
+      "2"
+    ],
+    "Enter Closed Loop": [
+      "TC0035",
+      "3"
+    ],
+    "Environment ID": [
+      "TS075",
+      "7"
+    ],
+    "Exit Closed Loop": [
+      "TC0036",
+      "3"
+    ],
+    "Extended Brake Diagnostic Enabled": [
+      "TD0017",
+      "3"
+    ],
+    "Extended Brake Select": [
+      "TS021",
+      "7"
+    ],
+    "Extended Brake Sensor": [
+      "TS095",
+      "7"
+    ],
+    "F_Terminal Present": [
+      "TS032",
+      "7"
+    ],
+    "Fail Frequency": [
+      "TC0191",
+      "2"
+    ],
+    "Fan 1": [
+      "TS002",
+      "7"
+    ],
+    "Fan 2": [
+      "TS003",
+      "7"
+    ],
+    "Fan 3": [
+      "TS004",
+      "7"
+    ],
+    "Fan Drivers": [
+      "TS001",
+      "7"
+    ],
+    "Fan Speed Off": [
+      "TS006",
+      "7"
+    ],
+    "Fan Speed On": [
+      "TS005",
+      "7"
+    ],
+    "Fan State Change": [
+      "TO0028",
+      "1"
+    ],
+    "Fan Transition Point in %": [
+      "TO0029",
+      "1"
+    ],
+    "Fast TRQ Exit - Disable Torque Delta": [
+      "TC0120",
+      "2"
+    ],
+    "Fast TRQ Exit - ETC Torque Limit": [
+      "TC0121",
+      "2"
+    ],
+    "Fast TRQ Exit - Enable Torque Delta": [
+      "TC0119",
+      "2"
+    ],
+    "Fast TRQ Exit - Use Fuel Cut": [
+      "TC0118",
+      "2"
+    ],
+    "Fast TRQ Exit - Use Spark": [
+      "TC0117",
+      "2"
+    ],
+    "Fixed Ethanol %": [
+      "TC0030",
+      "2"
+    ],
+    "Flapper Default Position": [
+      "TS099",
+      "7"
+    ],
+    "Flapper Mode": [
+      "TS007",
+      "7"
+    ],
+    "Flapper Transition": [
+      "TS012",
+      "7"
+    ],
+    "FlapperDfltPstn": [
+      "TS008",
+      "7"
+    ],
+    "Flash Record A - Current": [
+      "TO0069",
+      "1"
+    ],
+    "Flash Record A - Past 5": [
+      "TO0067",
+      "1"
+    ],
+    "Flash Record B - Current": [
+      "TO0070",
+      "1"
+    ],
+    "Flash Record B - Past 5": [
+      "TO0068",
+      "1"
+    ],
+    "Flex Sensor Diagnostic": [
+      "TC0197",
+      "2"
+    ],
+    "Front Wheel Drive": [
+      "TS043",
+      "7"
+    ],
+    "Fuel Density": [
+      "TF0010",
+      "6"
+    ],
+    "Fuel Lvl Raw High Lim": [
+      "TF0004",
+      "6"
+    ],
+    "Fuel Lvl Raw Low Lim": [
+      "TF0005",
+      "6"
+    ],
+    "Fuel Pump Delay": [
+      "TS122",
+      "7"
+    ],
+    "Fuel Sender Type": [
+      "TF0001",
+      "6"
+    ],
+    "Fuel Sender Unit Type": [
+      "TF0011",
+      "6"
+    ],
+    "Fuel System Power Control Delay": [
+      "TO0058",
+      "1"
+    ],
+    "Fuel System Rated Capacity": [
+      "TF0006",
+      "6"
+    ],
+    "Fuel System Rated Capacity Diagnostics": [
+      "TF0009",
+      "6"
+    ],
+    "Fuel System Voltage Map": [
+      "TO0056",
+      "1"
+    ],
+    "Gear Ratio": [
+      "TC0007",
+      "2"
+    ],
+    "Gear Ratio-System": [
+      "TS093",
+      "7"
+    ],
+    "Gear Ratios-System": [
+      "TS045",
+      "7"
+    ],
+    "Gear1": [
+      "TC0096",
+      "2"
+    ],
+    "Gear2": [
+      "TC0097",
+      "2"
+    ],
+    "Gear3": [
+      "TC0098",
+      "2"
+    ],
+    "Gear4": [
+      "TC0099",
+      "2"
+    ],
+    "Gear5": [
+      "TC0100",
+      "2"
+    ],
+    "Gear6": [
+      "TC0101",
+      "2"
+    ],
+    "Gearbox Type": [
+      "TS109",
+      "7"
+    ],
+    "Global-A Supported": [
+      "TS083",
+      "7"
+    ],
+    "HIRES_At MEDRES_Zero": [
+      "TC0140",
+      "2"
+    ],
+    "HIRES_Per MEDRES": [
+      "TC0141",
+      "2"
+    ],
+    "IAT Sensor Scale": [
+      "TO0039",
+      "1"
+    ],
+    "IAT Sensor Setting": [
+      "TO0038",
+      "1"
+    ],
+    "IMS Fitted": [
+      "TS038",
+      "7"
+    ],
+    "ISS Available": [
+      "TS126",
+      "7"
+    ],
+    "IVT Weighting Coefficient - AFR Term": [
+      "TC0021",
+      "2"
+    ],
+    "Idle Speed Control vs VSS": [
+      "TO0050",
+      "1"
+    ],
+    "Ignition Check Decimal View": [
+      "TO0036",
+      "1"
+    ],
+    "Ignition System Check OS Patch": [
+      "TO0035",
+      "1"
+    ],
+    "Ignition System Check System CAL": [
+      "TO0037",
+      "1"
+    ],
+    "Immob Enable": [
+      "TS105",
+      "7"
+    ],
+    "Immob Type Selection": [
+      "TS104",
+      "7"
+    ],
+    "Imob Response Not Recieved": [
+      "TS079",
+      "7"
+    ],
+    "Incorrect PreRelPssw": [
+      "TS084",
+      "7"
+    ],
+    "Incorrect Response": [
+      "TS080",
+      "7"
+    ],
+    "Inhibit Reverse If VehSpd Fault": [
+      "TC0009",
+      "2"
+    ],
+    "Injector Boundary Table": [
+      "TC0020",
+      "2"
+    ],
+    "Injector Boundary Table Desoot": [
+      "TC0181",
+      "2"
+    ],
+    "Injector Flow Modifier vs MAP": [
+      "TC0186",
+      "2"
+    ],
+    "Injector Offset vs Injector Temp": [
+      "TC0110",
+      "2"
+    ],
+    "Integral Enable RPM Error": [
+      "TC0123",
+      "2"
+    ],
+    "J2 Pin 23 Sensor Type": [
+      "TS119",
+      "7"
+    ],
+    "KeEVPD_Pct_FuelLvlSnsdMaxPrm": [
+      "TF0013",
+      "6"
+    ],
+    "KeEVPD_Pct_FuelLvlSnsdMaxSec": [
+      "TF0015",
+      "6"
+    ],
+    "KeEVPD_Pct_FuelLvlSnsdMinPrm": [
+      "TF0012",
+      "6"
+    ],
+    "KeEVPD_Pct_FuelLvlSnsdMinSec": [
+      "TF0014",
+      "6"
+    ],
+    "KeFLVC_Pct_E85_ConcentrationHi": [
+      "TF0034",
+      "6"
+    ],
+    "KeFLVC_Pct_E85_ConcentrationLo": [
+      "TF0035",
+      "6"
+    ],
+    "KeFLVD_Pct_FuelLvlSnsrHiPri": [
+      "TF0016",
+      "6"
+    ],
+    "KeFLVD_Pct_FuelLvlSnsrHiSec": [
+      "TF0018",
+      "6"
+    ],
+    "KeFLVD_Pct_FuelLvlSnsrLoPri": [
+      "TF0017",
+      "6"
+    ],
+    "KeFLVD_Pct_FuelLvlSnsrLoSec": [
+      "TF0019",
+      "6"
+    ],
+    "KeFLVD_l_PriSenderMinDist": [
+      "TF0038",
+      "6"
+    ],
+    "KeFLVI_V_FuelLvlFastFiltHysHigh": [
+      "TF0031",
+      "6"
+    ],
+    "KeFLVI_V_FuelLvlFastFiltHysLow": [
+      "TF0030",
+      "6"
+    ],
+    "KeFLVI_V_FuelSysRatedCapDiag": [
+      "TF0020",
+      "6"
+    ],
+    "KeFLVI_V_FuelSysRatedCapDsply": [
+      "TF0021",
+      "6"
+    ],
+    "KeFLVI_V_PriTankFullDiag": [
+      "TF0022",
+      "6"
+    ],
+    "KeFLVI_V_PriTankFullDsply": [
+      "TF0023",
+      "6"
+    ],
+    "KeFLVI_V_PriTankRatedCapDiag": [
+      "TF0024",
+      "6"
+    ],
+    "KeFLVI_V_PriTankRatedCapDsply": [
+      "TF0025",
+      "6"
+    ],
+    "KeFLVI_V_SecTankEmptyDiag": [
+      "TF0026",
+      "6"
+    ],
+    "KeFLVI_V_SecTankEmptyDsply": [
+      "TF0027",
+      "6"
+    ],
+    "KeFLVI_V_SecTankEstimateDiag": [
+      "TF0028",
+      "6"
+    ],
+    "KeFLVI_V_SecTankEstimateDsply": [
+      "TF0029",
+      "6"
+    ],
+    "KeFLVI_k_FuelLvlInFiltDsplyPri": [
+      "TF0036",
+      "6"
+    ],
+    "KeFLVI_k_FuelLvlInFiltDsplySec": [
+      "TF0037",
+      "6"
+    ],
+    "KeFLVI_v_FuelLevelVehSpdDiag": [
+      "TF0033",
+      "6"
+    ],
+    "KeFLVI_v_FuelLevelVehSpdDsply": [
+      "TF0032",
+      "6"
+    ],
+    "KeIMOD_b_ChalRespIncrtDiagEnbld": [
+      "TS072",
+      "7"
+    ],
+    "KeIMOG_b_ImmoFreeStartsAllowed": [
+      "TS073",
+      "7"
+    ],
+    "KeTISI_b_NISS_Avail": [
+      "TS048",
+      "2"
+    ],
+    "KeTOSI_b_NOSS_Aftr2Speed_Axle": [
+      "TS047",
+      "8"
+    ],
+    "KnTRQC_v_TransTrqReqGr2Axis": [
+      "TC0068",
+      "2"
+    ],
+    "KnTRQC_v_TransTrqReqGr3Axis": [
+      "TC0069",
+      "2"
+    ],
+    "KnTRQC_v_TransTrqReqGr4Axis": [
+      "TC0070",
+      "2"
+    ],
+    "KnTRQC_v_TransTrqReqGr5Axis": [
+      "TC0071",
+      "2"
+    ],
+    "KnTRQC_v_TransTrqReqGr6Axis": [
+      "TC0072",
+      "2"
+    ],
+    "KtEOTI_T_OhmsToEngOilSensed": [
+      "TC0163",
+      "2"
+    ],
+    "KtIVTP_afr_FtnAFR_Ofst": [
+      "TO0095",
+      "1"
+    ],
+    "KtTFTI_T_ANA2_Sensor": [
+      "TC0162",
+      "2"
+    ],
+    "LORES Fine Ofset": [
+      "TC0156",
+      "2"
+    ],
+    "LORES Intake Ofset": [
+      "TC0157",
+      "2"
+    ],
+    "LORES Reference Angle": [
+      "TC0138",
+      "2"
+    ],
+    "Low Speed Inhibit": [
+      "TC0066",
+      "2"
+    ],
+    "MAP Initial Soft Fail": [
+      "TO0077",
+      "1"
+    ],
+    "MAP Sensor Diagnostic High Threshold": [
+      "TO0078",
+      "1"
+    ],
+    "MAP Sensor Diagnostic Low Threshold": [
+      "TO0079",
+      "1"
+    ],
+    "MAP Sensor Short to High Clear Count": [
+      "TO0082",
+      "1"
+    ],
+    "MAP Sensor Short to High Max Fail Count": [
+      "TO0080",
+      "1"
+    ],
+    "MAP Sensor Short to High Pressure Max Threshold ": [
+      "TO0075",
+      "1"
+    ],
+    "MAP Sensor Short to High Threshold": [
+      "TO0073",
+      "1"
+    ],
+    "MAP Sensor Short to Low Clear Count": [
+      "TO0083",
+      "1"
+    ],
+    "MAP Sensor Short to Low Max Fail Count": [
+      "TO0081",
+      "1"
+    ],
+    "MAP Sensor Short to Low Pressure Min Threshold": [
+      "TO0076",
+      "1"
+    ],
+    "MAP Sensor Short to Low Threshold": [
+      "TO0074",
+      "1"
+    ],
+    "Manual Gear Max": [
+      "TS037",
+      "7"
+    ],
+    "Max Air Fuel Ratio": [
+      "TC0033",
+      "2"
+    ],
+    "Max Ethanol Content": [
+      "TC0014",
+      "2"
+    ],
+    "Max Idle Airflow - Maf Steady State In-Gear": [
+      "TC0001",
+      "2"
+    ],
+    "Max Idle Airflow - Maf Steady State PN": [
+      "TC0002",
+      "2"
+    ],
+    "Max Stall Time": [
+      "TS117",
+      "7"
+    ],
+    "Max. Lean Open Loop EQ Ratio Limits vs ECT": [
+      "TO0021",
+      "1"
+    ],
+    "Max. Lean Open Loop Lambda Limits vs ECT": [
+      "TO0020",
+      "1"
+    ],
+    "Maximum allowed system voltage": [
+      "TO0086",
+      "1"
+    ],
+    "Min Air Fuel Ratio": [
+      "TC0034",
+      "2"
+    ],
+    "Min Eng Run Time": [
+      "TC0182",
+      "2"
+    ],
+    "Min Engine Sync RPM": [
+      "TC0159",
+      "2"
+    ],
+    "Min Ethanol Content": [
+      "TC0015",
+      "2"
+    ],
+    "Min Expected Acceleration": [
+      "TC0164",
+      "2"
+    ],
+    "Min Speed Inhibit": [
+      "TC0065",
+      "2"
+    ],
+    "Min Vehicle Speed": [
+      "TD0015",
+      "3"
+    ],
+    "MinSerialData 4K Freq": [
+      "TG0006",
+      "8"
+    ],
+    "Minimum Duty Cycle": [
+      "TS056",
+      "7"
+    ],
+    "Minimum allowed system voltage": [
+      "TO0085",
+      "1"
+    ],
+    "MultiFrameMsgMax": [
+      "TS090",
+      "7"
+    ],
+    "NOSS_Aftr2Speed_Axle": [
+      "TS111",
+      "7"
+    ],
+    "Neutral": [
+      "TC0102",
+      "2"
+    ],
+    "No Response Diag Enable": [
+      "TS078",
+      "7"
+    ],
+    "Nominal system voltage with the engine running": [
+      "TO0084",
+      "1"
+    ],
+    "Normal Engine Sync": [
+      "TC0137",
+      "2"
+    ],
+    "Not Programmed": [
+      "TS076",
+      "7"
+    ],
+    "Number of Fans": [
+      "TO0030",
+      "1"
+    ],
+    "Number of Post-Cat O2": [
+      "TC0028",
+      "2"
+    ],
+    "Number of Pre-Cat O2": [
+      "TC0027",
+      "2"
+    ],
+    "O2 Sensor Enabled": [
+      "TC0026",
+      "2"
+    ],
+    "O2 Sensor Position 1": [
+      "TC0022",
+      "2"
+    ],
+    "O2 Sensor Position 2": [
+      "TC0023",
+      "2"
+    ],
+    "O2 Sensor Position 3": [
+      "TC0024",
+      "2"
+    ],
+    "O2 Sensor Position 4": [
+      "TC0025",
+      "2"
+    ],
+    "OS Patch VATS A": [
+      "TO0031",
+      "1"
+    ],
+    "OS Patch VATS B": [
+      "TO0032",
+      "1"
+    ],
+    "OS RX Msg ID Data Length": [
+      "TO0001",
+      "1"
+    ],
+    "OS Segment PN Hex": [
+      "TO0065",
+      "1"
+    ],
+    "OS TX Msg ID Data Length": [
+      "TO0002",
+      "1"
+    ],
+    "Oil Level Switch Fitted": [
+      "TC0010",
+      "2"
+    ],
+    "Oil Pressure Sensor Type": [
+      "TC0168",
+      "2"
+    ],
+    "Oil Sensor In Use": [
+      "TC0043",
+      "2"
+    ],
+    "Oil Starvation": [
+      "TC0003",
+      "2"
+    ],
+    "Oil Starve Min Eng Run": [
+      "TC0059",
+      "2"
+    ],
+    "On Veh Comm Protocol": [
+      "TS033",
+      "7"
+    ],
+    "OpelID_Immob": [
+      "TS071",
+      "7"
+    ],
+    "Over Speed Disengage": [
+      "TC0067",
+      "2"
+    ],
+    "Override DC Max": [
+      "TS113",
+      "7"
+    ],
+    "Override Duty Cycle Max": [
+      "TS058",
+      "2"
+    ],
+    "Override Table": [
+      "TS116",
+      "7"
+    ],
+    "PN Swch PullUp Input": [
+      "TS040",
+      "2"
+    ],
+    "PN_SwchPullUpInput": [
+      "TS108",
+      "7"
+    ],
+    "PPEI3 Present": [
+      "TS107",
+      "7"
+    ],
+    "PPEI3 Present - Cruise": [
+      "TS024",
+      "7"
+    ],
+    "PPEI3 SLCT": [
+      "TS100",
+      "7"
+    ],
+    "PPEI3 Select Braking": [
+      "TS022",
+      "7"
+    ],
+    "PT_Relay Present": [
+      "TC0039",
+      "2"
+    ],
+    "Park": [
+      "TC0104",
+      "2"
+    ],
+    "Park Neutral Switch": [
+      "TS039",
+      "7"
+    ],
+    "Pct_LimReducedPwr": [
+      "TC0093",
+      "2"
+    ],
+    "Pct_UrbanThrotArea": [
+      "TC0087",
+      "2"
+    ],
+    "Ped Pstn Perfm Update": [
+      "TC0089",
+      "2"
+    ],
+    "Pedal Hi Perfm Update": [
+      "TC0090",
+      "2"
+    ],
+    "Pedal Hi Position Performance Update": [
+      "TC0047",
+      "2"
+    ],
+    "Pedal Position Performance Update": [
+      "TC0046",
+      "2"
+    ],
+    "Pedal Pstn Trans Enbl": [
+      "TC0094",
+      "2"
+    ],
+    "PostRelDur": [
+      "TS085",
+      "7"
+    ],
+    "Power Mode Delay": [
+      "TS123",
+      "7"
+    ],
+    "Powertrain ID": [
+      "TS074",
+      "7"
+    ],
+    "Pre-Release": [
+      "TS088",
+      "7"
+    ],
+    "Primary Tank Full Diagnostics": [
+      "TF0008",
+      "6"
+    ],
+    "Primary Tank Full Display": [
+      "TF0007",
+      "6"
+    ],
+    "Proportional Enable RPM Error": [
+      "TC0122",
+      "2"
+    ],
+    "PushStartEngSpd": [
+      "TS086",
+      "7"
+    ],
+    "RPM or KPH Axis": [
+      "TC0017",
+      "2"
+    ],
+    "RR Source": [
+      "TC0062",
+      "2"
+    ],
+    "RTD System Present": [
+      "TS034",
+      "7"
+    ],
+    "RVC Generator": [
+      "TS053",
+      "7"
+    ],
+    "RVS_Response Delay": [
+      "TS087",
+      "7"
+    ],
+    "ReacFlapperDelay": [
+      "TS013",
+      "7"
+    ],
+    "Read TCSS Input": [
+      "TS030",
+      "7"
+    ],
+    "Read_TCSS_Input": [
+      "TS098",
+      "7"
+    ],
+    "RearWheelSpdOutput": [
+      "TS027",
+      "8"
+    ],
+    "Remember Engine Position": [
+      "TC0170",
+      "2"
+    ],
+    "Remember Save Rpm": [
+      "TC0171",
+      "2"
+    ],
+    "Request Denied MSG Time": [
+      "TC0053",
+      "3"
+    ],
+    "Reverse": [
+      "TC0103",
+      "2"
+    ],
+    "Reverse Inhibit Logic": [
+      "TC0008",
+      "2"
+    ],
+    "Rx Device Index": [
+      "TS063",
+      "7"
+    ],
+    "Rx Fail Limit": [
+      "TS061",
+      "7"
+    ],
+    "Rx Msg ID Data Length": [
+      "TS120",
+      "7"
+    ],
+    "Rx Msg Id Data Length": [
+      "TS067",
+      "7"
+    ],
+    "Rx Msg Object ID": [
+      "TS070",
+      "7"
+    ],
+    "Rx Msg Times": [
+      "TS065",
+      "7"
+    ],
+    "Rx Sample Limit": [
+      "TS062",
+      "7"
+    ],
+    "Security Code": [
+      "TS082",
+      "7"
+    ],
+    "Seed and Key": [
+      "TO0066",
+      "1"
+    ],
+    "Seed&KeyLearn": [
+      "TS091",
+      "7"
+    ],
+    "Serial Request Init": [
+      "TS057",
+      "7"
+    ],
+    "Set TCC Always Off": [
+      "TC0092",
+      "2"
+    ],
+    "Speed Output Type": [
+      "TG0003",
+      "2"
+    ],
+    "Speedo Options - Input": [
+      "TO0051",
+      "1"
+    ],
+    "Speedo Options - Output": [
+      "TO0052",
+      "1"
+    ],
+    "Speedo Options - VSS PID Source (Para E)": [
+      "TO0053",
+      "1"
+    ],
+    "Starter IN DEVELOPMENT": [
+      "TO0088",
+      "1"
+    ],
+    "Starter running voltage drop": [
+      "TO0087",
+      "1"
+    ],
+    "Startup Enable Delay": [
+      "TS115",
+      "7"
+    ],
+    "Switch Diagnostics": [
+      "TC0193",
+      "2"
+    ],
+    "Switch Float High": [
+      "TC0056",
+      "2"
+    ],
+    "Switch Float Low": [
+      "TC0055",
+      "2"
+    ],
+    "Switch Indicated Max": [
+      "TC0058",
+      "2"
+    ],
+    "Switch Indicated Min": [
+      "TC0057",
+      "2"
+    ],
+    "System Voltage High Counter - 1 Count/Sec": [
+      "TO0089",
+      "1"
+    ],
+    "System Voltage High Samples - 1 Count/Sec": [
+      "TO0090",
+      "1"
+    ],
+    "System Voltage Low Counter - 1 Count/Sec": [
+      "TO0091",
+      "1"
+    ],
+    "System Voltage Low Min Eng Spd for test": [
+      "TO0093",
+      "1"
+    ],
+    "System Voltage Low Samples  - 1 Count/Sec": [
+      "TO0092",
+      "1"
+    ],
+    "System Voltage out of range limit timer": [
+      "TO0094",
+      "1"
+    ],
+    "TCC Brake Switch Norm Open": [
+      "TS127",
+      "7"
+    ],
+    "TCM Config Select": [
+      "TS023",
+      "7"
+    ],
+    "TCM_ConfigSlct": [
+      "TS097",
+      "7"
+    ],
+    "TCS Electrical Architecture": [
+      "TS035",
+      "7"
+    ],
+    "TM 1 1CE2CC=1CE000+44": [
+      "TO0024",
+      "1"
+    ],
+    "TM 4 1CEB90": [
+      "TO0026",
+      "1"
+    ],
+    "TM 5 1D027E": [
+      "TO0027",
+      "1"
+    ],
+    "TOS Pulse Period": [
+      "TG0007",
+      "8"
+    ],
+    "TOSI ECM Application": [
+      "TG0004",
+      "8"
+    ],
+    "TPS Error Limit +ve": [
+      "TO0016",
+      "1"
+    ],
+    "TPS Error Limit -ve": [
+      "TO0017",
+      "1"
+    ],
+    "Temp Sensor Type": [
+      "TC0018",
+      "2"
+    ],
+    "TheftRequiredToTrnstn": [
+      "TS092",
+      "7"
+    ],
+    "Throttle Area - Air Temp Multiplier": [
+      "TC0105",
+      "2"
+    ],
+    "Throttle Area Air Temp": [
+      "TC0161",
+      "2"
+    ],
+    "Throttle Area Altitude": [
+      "TC0184",
+      "2"
+    ],
+    "Throttle Area Gear": [
+      "TC0185",
+      "2"
+    ],
+    "Throttle Area Gear Multiplier": [
+      "TC0183",
+      "2"
+    ],
+    "Throttle Area Trans Max": [
+      "TC0160",
+      "2"
+    ],
+    "Throttle Area Vs Position": [
+      "TC0108",
+      "2"
+    ],
+    "Throttle Close Rate Table": [
+      "TO0048",
+      "1"
+    ],
+    "Throttle Map A": [
+      "TO0042",
+      "1"
+    ],
+    "Throttle Map B": [
+      "TO0043",
+      "1"
+    ],
+    "Throttle Map C": [
+      "TO0044",
+      "1"
+    ],
+    "Throttle Map Rate Axis Type Flag": [
+      "TO0047",
+      "1"
+    ],
+    "Throttle Map Scale X - Rate Axis": [
+      "TO0046",
+      "1"
+    ],
+    "Throttle Map Scale Y - TPS Axis": [
+      "TO0045",
+      "1"
+    ],
+    "Throttle Map Switch Method": [
+      "TC0042",
+      "2"
+    ],
+    "Throttle Open Rate Table": [
+      "TO0049",
+      "1"
+    ],
+    "Throttle Pedal Limit Map": [
+      "TC0049",
+      "2"
+    ],
+    "Throttle Position Vs Area": [
+      "TC0107",
+      "2"
+    ],
+    "Throttle Response Map 'D'": [
+      "TC0044",
+      "2"
+    ],
+    "Throttle Response Map 'Limited'": [
+      "TC0088",
+      "2"
+    ],
+    "Throttle Response Map 'Limp'": [
+      "TC0045",
+      "2"
+    ],
+    "Torque Calc Map": [
+      "TO0023",
+      "1"
+    ],
+    "Torque Calc Map - Ethanol": [
+      "TO0022",
+      "1"
+    ],
+    "Trans Gear Ratio": [
+      "TC0079",
+      "2"
+    ],
+    "Trans Gear Selector Pstn Range": [
+      "TC0125",
+      "2"
+    ],
+    "Trans Gear State Default": [
+      "TG0002",
+      "2"
+    ],
+    "Trans Req Actv Max": [
+      "TC0095",
+      "2"
+    ],
+    "Trans Temp Max": [
+      "TD0013",
+      "3"
+    ],
+    "Trans Temp Min": [
+      "TD0014",
+      "3"
+    ],
+    "Trans Temp Sensor Avail": [
+      "TC0040",
+      "2"
+    ],
+    "Trans Temp Sensor Type": [
+      "TC0166",
+      "2"
+    ],
+    "Trans Throttle Position Vs Area": [
+      "TC0106",
+      "2"
+    ],
+    "Transition Volume": [
+      "TC0190",
+      "2"
+    ],
+    "Transmission Type": [
+      "TS042",
+      "7"
+    ],
+    "Two Speed Axle Present": [
+      "TS101",
+      "7"
+    ],
+    "TwoSpeedAxlePresent": [
+      "TS031",
+      "7"
+    ],
+    "Tx Fast Send Times": [
+      "TS066",
+      "7"
+    ],
+    "Tx Msg ID Data Length": [
+      "TS121",
+      "7"
+    ],
+    "Tx Msg Id Data Length": [
+      "TS068",
+      "7"
+    ],
+    "Tx Msg Object ID": [
+      "TS069",
+      "7"
+    ],
+    "Tx Msg Object Id": [
+      "TS106",
+      "7"
+    ],
+    "Tx Msg Times": [
+      "TS064",
+      "7"
+    ],
+    "Urban Throttle Area": [
+      "TC0196",
+      "2"
+    ],
+    "Urban Trans Gear": [
+      "TC0086",
+      "2"
+    ],
+    "Urban_Mode_Enable": [
+      "TC0085",
+      "2"
+    ],
+    "Use Driven Wheel Backup": [
+      "TC0060",
+      "2"
+    ],
+    "Use Estimated Trans Temp": [
+      "TC0167",
+      "2"
+    ],
+    "Use Fixed Ethanol %": [
+      "TC0029",
+      "2"
+    ],
+    "VATS A Decimal View": [
+      "TO0033",
+      "1"
+    ],
+    "VATS B Decimal View": [
+      "TO0034",
+      "1"
+    ],
+    "VE Mulitiplier": [
+      "TO0041",
+      "1"
+    ],
+    "Vac Level Ped Thrsh": [
+      "TC0091",
+      "2"
+    ],
+    "Vac Sense Config": [
+      "TS046",
+      "7"
+    ],
+    "Vacuum Level Pedal Threshold": [
+      "TC0048",
+      "2"
+    ],
+    "VehSpdTos Pulse Avg": [
+      "TG0005",
+      "8"
+    ],
+    "VehSysCal-PartNumber": [
+      "TS128",
+      "7"
+    ],
+    "VehicleSpeedZero": [
+      "TS015",
+      "7"
+    ],
+    "Voltage Control": [
+      "TS112",
+      "7"
+    ],
+    "Wait Edges": [
+      "TC0172",
+      "2"
+    ],
+    "Wheel Speed Difference": [
+      "TC0109",
+      "2"
+    ],
+    "X1-21 Brake Booster Sensor Present": [
+      "TC0019",
+      "2"
+    ],
+    "X1-3 Usage": [
+      "TC0061",
+      "2"
+    ],
+    "X1-66 Control": [
+      "TC0080",
+      "2"
+    ],
+    "X1-66 Usage": [
+      "TC0011",
+      "2"
+    ],
+    "X2-11 Control": [
+      "TC0081",
+      "2"
+    ],
+    "X2-11 Usage": [
+      "TC0012",
+      "2"
+    ],
+    "X2-21 Control": [
+      "TC0082",
+      "2"
+    ],
+    "X2-23 Usage": [
+      "TC0013",
+      "2"
+    ],
+    "Zero Percent Freq": [
+      "TC0192",
+      "2"
+    ]
+  },
+  "T42": {
+    "Allow Max Range in Tapshift": [
+      "TC0008",
+      "4"
+    ],
+    "Coast Mode Enable": [
+      "TC0027",
+      "4"
+    ],
+    "Downshift 3-2 Solenoid": [
+      "TC0012",
+      "4"
+    ],
+    "Enable Tap Shift": [
+      "TC0006",
+      "4"
+    ],
+    "High Speed TPS Hi": [
+      "TC0020",
+      "4"
+    ],
+    "High Speed TPS Lo": [
+      "TC0019",
+      "4"
+    ],
+    "High Speed VSS": [
+      "TC0022",
+      "4"
+    ],
+    "IP Display": [
+      "TC0004",
+      "4"
+    ],
+    "IP Display Delay": [
+      "TC0005",
+      "4"
+    ],
+    "Low Speed TPS Hi": [
+      "TC0018",
+      "4"
+    ],
+    "Low Speed TPS Lo": [
+      "TC0017",
+      "4"
+    ],
+    "Low Speed VSS": [
+      "TC0021",
+      "4"
+    ],
+    "Min TPS Option": [
+      "TC0016",
+      "4"
+    ],
+    "Min-TPS-Gear": [
+      "TC0015",
+      "4"
+    ],
+    "Mountain Mode": [
+      "TC0003",
+      "4"
+    ],
+    "NSBU Encoding": [
+      "TC0024",
+      "4"
+    ],
+    "PRNDL Encoding": [
+      "TC0025",
+      "4"
+    ],
+    "PSM Encoding": [
+      "TC0026",
+      "4"
+    ],
+    "Range Active Enable": [
+      "TC0001",
+      "4"
+    ],
+    "Range Position Enable": [
+      "TC0031",
+      "4"
+    ],
+    "Range Selector Enable": [
+      "TC0002",
+      "4"
+    ],
+    "Rx Device Index": [
+      "TS011",
+      "7"
+    ],
+    "Rx Fail Limit": [
+      "TS001",
+      "7"
+    ],
+    "Rx Msg Id Data Length": [
+      "TS006",
+      "7"
+    ],
+    "Rx Msg Object ID": [
+      "TS009",
+      "7"
+    ],
+    "Rx Msg Times": [
+      "TS004",
+      "7"
+    ],
+    "Rx Sample Limit": [
+      "TS002",
+      "7"
+    ],
+    "Shift Solenoid Pattern": [
+      "TC0013",
+      "4"
+    ],
+    "Shift Solenoid Pattern Braking": [
+      "TC0014",
+      "4"
+    ],
+    "Switch Debounce Down Time": [
+      "TC0011",
+      "4"
+    ],
+    "Switch Debounce Off Time": [
+      "TC0009",
+      "4"
+    ],
+    "Switch Debounce Up Time": [
+      "TC0010",
+      "4"
+    ],
+    "TCC Enable Solenoid": [
+      "TC0023",
+      "4"
+    ],
+    "TUTD Switch Type": [
+      "TC0007",
+      "4"
+    ],
+    "Throttle Coast Entry": [
+      "TC0028",
+      "4"
+    ],
+    "Throttle Coast Entry 2": [
+      "TC0029",
+      "4"
+    ],
+    "Throttle Coast Entry 3": [
+      "TC0030",
+      "4"
+    ],
+    "Transmission Type": [
+      "TS010",
+      "7"
+    ],
+    "Tx Fast Send Times": [
+      "TS005",
+      "7"
+    ],
+    "Tx Msg Id Data Length": [
+      "TS007",
+      "7"
+    ],
+    "Tx Msg Object Id": [
+      "TS008",
+      "7"
+    ],
+    "Tx Msg Times": [
+      "TS003",
+      "7"
+    ],
+    "Unknown": [
+      "TC0032",
+      "4"
+    ]
+  }
+}

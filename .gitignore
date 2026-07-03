@@ -1,0 +1,16 @@
+# EFILive's own compiled binary, kept locally only as a read-only reference
+CAXEdit/
+
+# Local machine state (paths, recent files, window prefs) written by QSettings
+app/caxedit_settings.ini
+
+# Python
+__pycache__/
+*.pyc
+
+# OS cruft
+desktop.ini
+Thumbs.db
+
+# Claude Code runtime state
+.claude/scheduled_tasks.lock
