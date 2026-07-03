@@ -3,8 +3,7 @@
 **An editor for EFILive calibration-definition files — V7 `.cax` and V8 `.cax8`.**
 Created by David Christie & Claude AI · Torque Up Technical Services · www.torqueup.net
 
-Began as a clean reimplementation of EFILive's lost-source *Cax Generator* (the
-original 2018 binary is kept in `CAXEdit/` for reference) and has grown into a full
+Began as a clean reimplementation of *Cax Generator* and has grown into a full
 editing, verification and conversion toolkit.
 
 ---
