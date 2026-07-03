@@ -2,8 +2,9 @@
 
 > **Ultimate Cax Generator** — a Python/PySide6 editor for EFILive `.cax` (V7) and
 > `.cax8` (V8) calibration-definition files. Began as a clean reimplementation of
-> EFILive's lost-source Cax Generator (old binary in `CAXEdit/`), now extended well
-> beyond it (verification, conversion, multi-file, segment tools).
+> a third-party, lost-source Cax Generator tool (old binary formerly kept in
+> `CAXEdit/`, removed — not EFILive's own software), now extended well beyond it
+> (verification, conversion, multi-file, segment tools).
 
 ## Read this first
 1. **Use the skills** in `.claude/skills/` — they are the how-to for this project:
@@ -28,7 +29,7 @@
     **Export → To Can-Display** and **Build Can-Display DB** dialogs).
   - `_*.py` are throwaway dev/test scripts; `caxedit_settings.ini` and
     `segment_ranges.json` are generated state — don't hand-edit or commit as source.
-- `docs/` — format references. `CAXEdit/` — the lost-source original binary (read-only reference).
+- `docs/` — format references.
 - `template.cax8`, `cax_to_cax8.ini` — EFILive-supplied V8 references.
 
 ## Working style
