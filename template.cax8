@@ -1,0 +1,352 @@
+;  _______________________________________________________________________
+; |                                                                       |
+; |                        © 1999 EFILive Limited                         |
+; |                        http://www.efilive.com                         |
+; |                           info@efilive.com                            |
+; |_______________________________________________________________________|
+;
+; V8 calibration definition extension sample
+;
+; _________________________________________________________________________
+; Each *.cax8 file name must begin with the same name as the EFILive supplied *.cam file for the target calibration.
+;
+; To lookup the name of the EFILive supplied *.cam file:
+;   1. Load a tune file with the target calibration,
+;   2. Open any EFILive defined calibration,
+;   3. Select the [Provider] tab page and observe the file name and the folder name.
+;
+; For example, if the EFILive supplied *.cam file is: C:\Program Files (x86)\EFILive\V8\Cam\E38\12649046.cam
+; then you must place your *.cax8 file(s) in the folder: \Documents\EFILive\V8\User Defined cax8\E38\
+;
+; In most cases the *.cax8 file name will be the same as the calibration's operating system number. However, some
+; Allison transmission calibrations use the calibration ID instead of the operating system number. And some
+; Cummins calibrations use a modified operating system number. So be careful to choose the correct file name for your *.cax8 file.
+;
+; You may create multiple *.cax8 files for the same calibration. Each *.cax8 file name must start with the matching sequence
+; as described above but may have additional characters appended to the filename. For example:
+;
+; - 12649046.cax8
+; - 12649046_Options.cax8
+; - 12649046_Code1.cax8
+; - 12649046_Testing.cax8
+;
+; All of those *.cax8 files will be loaded when a tune file is opened that uses the EFILive defined 12649046.cam.
+;
+; To ensure that all calibration names (and other identifiers) are unique across all *.cax8 files, you should define a
+; "UniqueID" value in the [Provider] section below so that each *.cax8 file has a unique "UniqueID" value.
+; Failing to provide a UniqueID will reuslt in the EFILive software assigning an automatically generated unqiue ID
+; in the range U00..U99.
+;
+; After modifying and saving a *.cax8 file, you can force the EFILive V8 tune editor to re-load the modified cax8 file(s) by
+; pressing the hotkey combination Ctrl+Alt+X while the editor is open.
+;
+; _________________________________________________________________________
+; Comment character is the semicolon.
+; All text on a single line following the first semicolon (outside of a quoted string) will be ignored.
+;
+; _________________________________________________________________________
+; Line continuation character is the backslash \ character. Placing it at the end of a line indicates that the next
+; line is a continuation of that line. The line continuation character will be ignored (as a continuation) if it
+; appears within a quoted string.
+;
+; _________________________________________________________________________
+; The $INCLUDE directive may be used to include the contents of another named file.
+; For example, to include another file called Common Data.txt, do this:
+; $Include Common Data.txt
+; The filename consists of all text following the $Include directive to the end of the line.
+; You may nest multiple include files.
+;
+; _________________________________________________________________________
+; Numeric values can be specified in decimal or hexadecimal
+;
+; Decimal numbers are entered as normal/standard numbers, scientific notation is acceptable.
+; Examples:
+; 123
+; 12.34
+; -12.34
+; 1.234E5 (is 1.234 x 10^5 = 123400)
+; 1.234E-5 (is 1.234 x 10^-5 = 0.00001234)
+;
+; Hexadecimal numbers are entered with the prefix $
+; Examples:
+; $F0        ( = decimal 240)
+; $4A3C      ( = decimal 19004)
+; $800EEF    ( = decimal 8392431)
+;
+; _________________________________________________________________________
+; All values and units in this cax8 file MUST be specified using metric units (or non-system-specific
+; units such as step, count) and the units must valid units as defined in the V8 software under
+; the Edit->Properties->General->Units tab page.
+;
+; When the calibration is displayed, the user can select the actual display units. So, for example if a
+; calibration is defined using km/h, then when the calibration is displayed, the user will be presented
+; with all other speed related units such as mph, feet/sec, meters/second etc. The user can choose to
+; display the calibration in any of those preferred units, the V8 software will automatically convert
+; the displayed values to the selected units.
+;
+; _________________________________________________________________________
+; Lists are separated using the comma and/or space character. When multiple, comma or space separated items
+; are listed, if any item contains a comma or space character, that item must be enclosed in double quotes.
+;
+; For example:
+; A list of gear names without double quotes, like this: First Gear, Second Gear, Third Gear
+; will be interpreted as six individual items: First, Gear, Second, Gear, Third and Gear.
+;
+; The same list of gear names with double quotes, like this: "First Gear","Second Gear","Third Gear"
+; will be interpreted as three individual items: First Gear, Second Gear and Third Gear.
+;
+; _________________________________________________________________________
+; Pre-defined default values are substituted if any value is specified as a dot.
+;
+; _________________________________________________________________________
+; Calibration IDs (Cal ID) can be any text. Unlike V7, the Cal ID is not restricted to a letter followed by 4 digits.
+;
+; _________________________________________________________________________
+;
+;-------------------------------------------------------------------------------------------------------------------
+; Provider contains information about the definitions and the person or company that provided them.
+;
+[Provider]
+;-------------------------------------------------- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+;Key                                                Value
+;-------------------------------------------------- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Version                                             8.3.1.0                ; major.minor.release.version - it is recommended to keep the major.minor.release values in-synch with the EFILive V8 software.
+Date                                                2020.08.01             ; year.month.day
+Name                                                Provider Name          ; Provider Name, Name of the person or company that created this file.
+UniqueID                                            ID                     ; Unique ID to prefix all names in this file to ensure uniqueness across different cax8 files.
+HelpFile                                            Filename               ; Name of the file that contains extra information about this file - not currently supported.
+Description                                         Description            ; Brief description of the contents of this file.
+Url                                                 http://www.website.com ; URL of the person or company that created this file.
+Contact                                             name@company.com       ; Email contact of the person or company that created this file.
+
+;-------------------------------------------------------------------------------------------------------------------
+; Definitions allow common or complex values to be defined as simple text
+; To dereference a definition name in a calibration definition, enclose the name in curly braces.
+;
+[Define]
+;-------------------------------------------------- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+;Definition                                         Value
+;-------------------------------------------------- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Name                                                Substitution
+
+;-------------------------------------------------------------------------------------------------------------------
+; Address offsets allow you to use the address definitions from a similar calibration that only differs by
+; a few blocks of calibration data that are offset by some number of bytes.
+; This feature is most useful if you define the addresses for each calibration in the [Define] section via an included/common file,
+; then reference those defined addresses in the [Data] section of multiple different cax8 files.
+;
+[AddressOffset]
+;-------------- --------------- -------------------
+;Start Address  End Address     Offset
+;-------------- --------------- -------------------
+Address1        Address2        +/- offset
+Address3        Address4        +/- offset
+etc.
+
+;-------------------------------------------------------------------------------------------------------------------
+; Enums (enumerations) are used to display text values in place of numeric values.
+;
+[Enum]
+;-------------------------------------------------- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+;Enumeration                                        Tag/Value List
+;-------------------------------------------------- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Name                                                "1=Red,2=Green,3=Blue"
+
+;-------------------------------------------------------------------------------------------------------------------
+; Axis define the labels that are displayed across the top and/or down the left side of calibration tables.
+;
+[Axis]
+;-------------------------------------------------- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+;Axis Name                                          Axis Labels
+;-------------------------------------------------- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+rpm0to6000x13                                       "0,500,1000,1500,2000,2500,3000,3500,4000,4500,5000,5500,6000
+
+;-------------------------------------------------------------------------------------------------------------------
+; The Data section contains each calibration's data definition.
+; It defines the way the calibration is retrieved/stored in the controller's memory.
+;
+[Data]
+;-------------------------------------------------------------------------------- -------- -------- -------- ---------------- ---------------- ---- -------- ---- ---------------- ---------------- ---------------- ---------------- ---------------- ---------------- ---------------- ---------------- ----------------
+;                                                                                          X        Y                                                                                                                                 X                Y
+;Cal ID                                                                           Address  ColCount RowCount Factor           Offset           Inv  Size     Type DataOffset       HardMin          HardMax          DataUnits        ColUnits         RowUnits         Deposit          Endian           Align
+;-------------------------------------------------------------------------------- -------- -------- -------- ---------------- ---------------- ---- -------- ---- ---------------- ---------------- ---------------- ---------------- ---------------- ---------------- ---------------- ---------------- ----------------
+; Cal ID         The unique name of the calibration. Do not re-use existing EFILive calibration IDs.
+;                Calibration names are case sensitive so the name "A1234" is considered to be different than "a1234"
+;
+; Address        Contains the address of the calibration. If a calibration consists of two or more
+;                  non-contiguous columns, then a list of addresses may be specified where each
+;                  address is the address of the first cell in each column.
+;
+; ColCount       The number of columns in the calibration. Default = 1.
+; RowCount       The number of rows in the calibration. Default = 1.
+;
+; Factor         The factor by which to multiply the raw controller values to convert them into the appropriate metric units. Default = 1.
+; Offset         The offset to add to the raw controller values to convert them into the appropriate metric units. Default = 0.
+; Inv            If set to 1, then invert the raw value prior to applying factor and offset. A raw value of zero
+;                  cannot be computed and will be displayed as an empty cell. Default = 0.
+;
+; Size           The size in bits of each cell in the calibration. Required.
+;                  The size can be any of the following three formats:
+;                  - B     where B is the number of bits - in this case, M defaults to all bits and S defaults to 0.
+;                  - B:M   where M is the bit mask - in this case S defaults to 0. Only data bits matching the 1 bits in (B<<S) will be read/written from/to the bin image.
+;                  - B:M:S where S is the bit-shift, bits will be shifted S bits right when reading and S bits left when writing.
+;
+;                  A value is extracted from the bin file as follows:
+;                  1. Extract as many whole bytes starting at the calibration's address as is required to satisfy the bit count.
+;                  2. Shift the mask left by shift bits.
+;                  3. Copy all bits from the extracted bytes that match the 1-bits in the mask.
+;                  4. Shift the copied bits right by shift bits.
+;
+;                  For example: assume Size = 16:$00FF:4 bits=16, Mask=$00FF, shift=4 (i.e. we are interested in these 8 bits from the middle of the 16 bits: ....11111111....)
+;                               and Bin data = $56,$78
+;                  1. Extract 16 bits (2 bytes of data) = $5678
+;                  2. Shift Mask left by 4 bits, effective mask = $0FF0
+;                  3. $5678 AND $0FF0 = $0670
+;                  4. Shift right by 4 bits, value = $0067 - we've successfully extracted the $67 from the middle of $5678
+;
+; Type           The data type of the calibration. Required.
+;                  Must be one of:
+;                  - UNM values are stored as unsigned numeric.
+;                  - SNM values are stored as signed numeric (two's compliment).
+;                  - SED values are stored as state encoded data (or enumerated types).
+;                  - FLT values are stored as 4 byte IEEE floating point values.
+;
+; DataOffset     The number of bytes from the calibration address to the first cell of data. Default = 0.
+;
+; HardMin        The minimum value that can be set for this calibration. Default = computed based on data type, and bit count.
+; HardMax        The maximum value that can be set for this calibration. Default = computed based on data type, and bit count.
+;
+; DataUnits      The metric units that will be used to display the calibration. Required.
+;                    The units MUST be defined in: Edit->Properties->General->Units.
+;                    The units MUST not be defined as "US" - US Customary units may instead be selected by the user when the calibration is displayed.
+; ColUnits       The metric units that will be used to display the top labels. Required.
+;                    The units MUST be defined in: Edit->Properties->General->Units.
+;                    The units MUST not be defined as "US" - US Customary units may instead be selected by the user when the calibration is displayed.
+; RowUnits       The metric units that will be used to display the left labels. Required.
+;                    The units MUST be defined in: Edit->Properties->General->Units.
+;                    The units MUST not be defined as "US" - US Customary units may instead be selected by the user when the calibration is displayed.
+;
+; Deposit        The order in which a table is stored in memory. Default = controller's default.
+;                  Must be one of:
+;                  - Col = data is stored as a sequence of columns.
+;                  - Row = data is stored as a sequence of rows.
+;
+; Endian         The endian-ness of the calibration's values. Default = controller's default.
+;                  Must be one of
+;                  - Intel = numerical values are stored least significant byte first.
+;                  - Motorola = numerical values are stored most significant byte first.
+;
+; Align          The byte alignment of the first cell of each column (if Deposit=Col) or
+;                of each row (if Deposit=Row). Default = controller's default.
+;                  Must be one of:
+;                  - Byte = aligned to an 8 bit boundary.
+;                  - Word = aligned to a 16 bit boundary.
+;                  - DWord = aligned to a 32 bit boundary.
+;                  - QWord = aligned to a 64 bit boundary.
+;
+;-------------------------------------------------------------------------------------------------------------------
+; The Calibration section contains each calibration's display definition,
+; it defines the way the calibration is displayed in the EFILive software.
+;
+[Calibration]
+;-------------------------------------------------------------------------------- --- -------------------------------- --------- -------- ---------------- ---------------- ---------------- ---------------- ---------- ----- ---------------- ---------------- ---------------- ---------------- ---------------- ----------------
+;Cal_ID                                                                           Seg Tree                             Flags     Display  SoftMin          SoftMax          Enum             Options          DataFmt    DPrec ColFmt           ColDesc          ColLabels        RowFmt           RowDesc          RowLabels
+;-------------------------------------------------------------------------------- --- -------------------------------- --------- -------- ---------------- ---------------- ---------------- ---------------- ---------- ----- ---------------- ---------------- ---------------- ---------------- ---------------- ----------------
+; Cal ID         The unique name of the calibration which matches the equivalent name in the [Data] section. Do not re-use existing EFILive calibration IDs.
+;
+; Seg            Determines the top-level branch in which this calibration will be displayed. Required.
+;                Segment numbers vary between controller types. Refer to the file: \Program Files (x86)\EFILive\V8\V7toV8_Segments.ini for a list of
+;                segment numbers and descriptions for each contorller type that is supported by the V8 tune editor.
+;
+; Tree           The backslash separated list of tree branches under which this calibration will be displayed.
+;                  For example: "Spark\General"
+;
+; Flags          Bitmapped flags that provide extra information to the EFILive software about this calibration.
+;                  $00000007 = Calibration is available (for scripting) but not visible to the end user for editing.
+;                  $00000010 = Calibration is not editable - effectively read-only.
+;                  $00000020 = Calibration is not available in US installations (for EPA compliance).
+;                  $00000040 = Calibration is not saved back into the bin image, even if it has been modified.
+;                  $00000080 = Calibration is only for information or display somewhere other than the editor's tree view.
+;                  $00001000 = Display calibration as raw hex values.
+;                  $00004000 = Display without value weighting or cell color (i.e. for parameter lists).
+;                  $00010000 = Do not display any 2D or 3D graphic image (i.e. for parameter lists and DTCs).
+;                  $00020000 = Display multi column tables as 2D line-chart instead of 3D surface.
+;                  $10000000 = Calibration is an editable axis.
+;                  $100350F7 = Only allowed bits in flags
+;                  All other bits are reserved/ignored and should be set to 0 for future compatibility.
+;
+; Display        Calibration's display format. Default = Value.
+;                  Must be one of:
+;                  - Value =      a single cell value.
+;                  - Curve =      a column of cells.
+;                  - Map =        a table of cells.
+;                  - List =       a repeating list of single values.
+;                  - DtcStatic =  a list of diagnostic trouble codes defined in the cax8 file.
+;                  - DtcDynamic = a list of diagnostic trouble codes defined in the tune file.
+;
+;                For the two DTC styles, the descriptions for the DTCs are loaded from the *.dtc files in the folder: \Program Files (x86)\EFILive\V8\Config\*.dtc
+;                If you want to add/modify the DTC descriptions, create your own DTC files in the \Documents\EFILive\V8\Config\DTC folder with the same names
+;                as the EFILive supplied *.dtc files but with *.txt extensions instead. Place each DTC Description pair on a separate line in the text file(s).
+;                The files are named using the following convention: "mfg_type.txt" where:
+;                  mfg is one of:
+;                    gm: General Motors
+;                    ch: Cummins light duty
+;                    hd: Cummins heavy duty - this file has no _type suffix.
+;                  type is one of:
+;                    p: Engine codes (beginning with "P")
+;                    b: Body codes (beginning with "B")
+;                    c: Chassis codes (beginning with "C")
+;                    u: Network codes (beginning with "U")
+;                The DTC descriptions are only loaded once (the first time they are displayed).
+;                If you modify any of the DTC description text files, you must re-start the EFILive V8 software to cause the modified descriptions to be re-loaded.
+;
+; SoftMin        The recommended/sane minimum limit that can be set for this calibration. Default = HardMin.
+; SoftMax        The recommended/sane maximum limit that can be set for this calibration. Default = HardMax.
+;
+; Enum           The name of the enumeration defined in the [Enum] section that will be used to convert the calibration's
+;                  numeric values into text values.
+;
+; Options        Not used, set to a single dot.
+;
+; DataFmt        The format string for the calibration's title. Default = "<d> <u>".
+;                  Substitutions:
+;                    <d> replace with the description.
+;                    <u> replace with the currently selected display units.
+;                    <U> replace with the currently selected display units' description.
+;
+; DPrec          Number of decimal points used to display the calibration value(s). Default = 0.
+;
+; ColFmt         The format string for the top axis title, see DataFmt for substitutions. Default = No title.
+; ColDesc        The description for the top axis. Default = No description.
+; ColLabels      The name of an axis defined in the [Axis] section. Default = No Labels.
+;                  Prefix:
+;                  - ' (single quote) for a string literal.
+;                  - @xxx to reference calibration "xxx" that defines the axis labels
+;
+; RowFmt         The format string for the left axis title, see DataFmt for substitutions. Default = No title.
+; RowDesc        The description for the left axis. Default = No description.
+; RowLabels      The name of an axis defined in the [Axis] section. Default = No Labels.
+;                  Prefix:
+;                  - ' (single quote) for a string literal.
+;                  - @xxx to reference calibration "xxx" that defines the axis labels
+
+;-----------------------------------------------------------------------------------------------------------------------
+; Descriptions for each calibration
+;
+[Description]
+;-----------------------------------------------------------------------------------------------------------------------
+; Descriptions are constructed using simple HTML.
+; Each calibration's description must begin with an HTML comment in
+; the following format:
+; <!-- #xxxxxxxx dddddddd -->
+;   where
+;     xxxxxxxx is the calibration's name
+;     dddddddd is the calibration's description
+;
+; All text following that comment, until the next such comment becomes
+; the calibration's description.
+;
+; - Use <br> to specify a new line, i.e. a new paragraph.
+; - Enclose calibration names in curly braces to create links to those calibrations.
+; - Add a hyphen prefix to the name to create a bullet-point list item.
+
