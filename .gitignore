@@ -1,4 +1,4 @@
-# EFILive's own compiled binary, kept locally only as a read-only reference
+# Third-party compiled binary (not EFILive's), formerly kept as a local reference
 CAXEdit/
 
 # Local machine state (paths, recent files, window prefs) written by QSettings
