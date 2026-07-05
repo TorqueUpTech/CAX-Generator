@@ -15,8 +15,10 @@ from __future__ import annotations
 
 import os
 import re
+import math
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import caxformat as cf
 
@@ -76,6 +78,256 @@ class XdfReport:
 # The variable is X or x as a standalone token — but NOT the 'x' inside a hex
 # literal like 0x03 (preceded by a word char). Match a bare x/X only.
 _VAR_RE = re.compile(r"(?<![\w])[xX](?![\w])")
+
+
+# ---- Enhanced Math Evaluation ------------------------------------------------
+
+def evaluate_math(equation: str, raw_value: float,
+                  axis_context: dict = None,
+                  linked_vars: dict = None) -> tuple:
+    """
+    Evaluate XDF math equations with TunerPro support.
+
+    Handles:
+    - Ternary: if(cond ; true ; false) -> Python (true) if (cond) else (false)
+    - Bitshift: Y >> 6 -> int(Y) >> 6 (auto-wrap in int)
+    - Math functions: exp, log, sqrt, pow, sin, cos, tan
+    - Multi-variable: X (raw), A (row), B (col), E (element count), Y/Z (axis)
+    - Linked variables: VAR type="link" references (resolved via linked_vars dict)
+    - Division by zero detection (inf/nan checks)
+
+    Args:
+        equation: Math equation string (e.g., "0.75 * X - 40")
+        raw_value: Raw binary value
+        axis_context: Optional dict with 'row_index', 'col_index', 'x_axis_value', 'y_axis_value'
+        linked_vars: Optional dict of resolved linked variable values
+
+    Returns:
+        (result: float or None, error: str)
+        If error, result is None and error contains error message.
+    """
+    if axis_context is None:
+        axis_context = {}
+
+    # Strip XML entities (&#013;&#010; etc)
+    equation = re.sub(r'&#\d+;', '', equation)
+    equation = equation.strip()
+
+    # Handle null/empty equations
+    if not equation or equation.lower() in ('(null)', 'null', ''):
+        return float(raw_value), ""
+
+    # Simple passthrough
+    if equation.strip().upper() == 'X':
+        return float(raw_value), ""
+
+    try:
+        equation_fixed = equation.strip()
+
+        # Fix equations starting with * or / (e.g., "*2**14" -> "X*2**14")
+        # BUT: don't prepend X to unary +/- (e.g., "-0.375*X" is valid)
+        if equation_fixed.startswith(('*', '/')):
+            equation_fixed = 'X' + equation_fixed
+
+        # Replace X variants like X1000, X100, X10 with raw_value
+        equation_fixed = re.sub(r'\bX\d+\b', str(raw_value), equation_fixed, flags=re.IGNORECASE)
+
+        # Convert TunerPro ternary if(cond ; true ; false) to Python
+        # Pattern: if ( condition ; value_if_true ; value_if_false )
+        tp_if_match = re.match(
+            r'^\s*if\s*\(\s*(.+?)\s*;\s*(.+?)\s*;\s*(.+?)\s*\)\s*$',
+            equation_fixed, re.IGNORECASE
+        )
+        if tp_if_match:
+            cond_part = tp_if_match.group(1).strip()
+            true_part = tp_if_match.group(2).strip()
+            false_part = tp_if_match.group(3).strip()
+            equation_fixed = f"({true_part}) if ({cond_part}) else ({false_part})"
+
+        # Ensure bitshift operands are integers
+        # Python's >> and << require int operands
+        if '>>' in equation_fixed or '<<' in equation_fixed:
+            equation_fixed = re.sub(r'\bY\b', 'int(Y)', equation_fixed)
+            equation_fixed = re.sub(r'\bX\b', 'int(X)', equation_fixed)
+            equation_fixed = re.sub(r'\bA\b', 'int(A)', equation_fixed)
+            equation_fixed = re.sub(r'\bB\b', 'int(B)', equation_fixed)
+            equation_fixed = re.sub(r'\bE\b', 'int(E)', equation_fixed)
+            # Clean up double-wrapping: int(int(X)) -> int(X)
+            equation_fixed = re.sub(r'int\(int\(([^)]+)\)\)', r'int(\1)', equation_fixed)
+
+        # Build evaluation namespace
+        namespace = {
+            # Raw data value
+            'X': raw_value, 'x': raw_value,
+
+            # Axis context (row/col indices and axis label values)
+            'A': axis_context.get('row_index', 0),
+            'a': axis_context.get('row_index', 0),
+            'B': max(axis_context.get('col_index', 1), 1),
+            'b': max(axis_context.get('col_index', 1), 1),
+            'E': axis_context.get('element_count', 1),
+            'e': axis_context.get('element_count', 1),
+            'Y': axis_context.get('y_axis_value', 0),
+            'y': axis_context.get('y_axis_value', 0),
+            'Z': axis_context.get('x_axis_value', 0),
+            'z': axis_context.get('x_axis_value', 0),
+
+            # Math functions
+            'exp': math.exp, 'log': math.log, 'log10': math.log10,
+            'sqrt': math.sqrt, 'pow': math.pow, 'abs': abs,
+            'int': int, 'float': float,
+            'sin': math.sin, 'cos': math.cos, 'tan': math.tan,
+            'PI': math.pi, 'pi': math.pi,
+
+            # Restrict eval to these symbols only
+            '__builtins__': {}
+        }
+
+        # Apply linked variable overrides (highest priority)
+        if linked_vars:
+            for var_name, var_val in linked_vars.items():
+                if var_val is not None:
+                    namespace[var_name] = var_val
+                    namespace[var_name.lower()] = var_val
+
+        # Evaluate the expression
+        result = eval(equation_fixed, namespace)
+
+        # Check for invalid results (inf/nan from division by zero)
+        if math.isinf(result):
+            return None, f"Division by zero (result=inf) in '{equation}'"
+        if math.isnan(result):
+            return None, f"Invalid math operation (result=NaN) in '{equation}'"
+
+        return float(result), ""
+
+    except ZeroDivisionError:
+        return None, f"Division by zero in '{equation}' (X={raw_value})"
+    except Exception as e:
+        return None, f"Math evaluation failed for '{equation}' (X={raw_value}): {str(e)}"
+
+
+def _build_uniqueid_index(root) -> dict:
+    """
+    Build index of all elements by uniqueid for linked-var resolution.
+
+    Returns:
+        uniqueid -> XML element dict
+    """
+    index = {}
+
+    # Index all XDFTABLE elements
+    for table in root.findall('.//XDFTABLE'):
+        uid = table.get('uniqueid')
+        if uid:
+            index[uid] = table
+
+    # Index all XDFCONSTANT elements (can be linked var sources too)
+    for const in root.findall('.//XDFCONSTANT'):
+        uid = const.get('uniqueid')
+        if uid:
+            index[uid] = const
+
+    return index
+
+
+def _resolve_linked_vars(math_elem, uniqueid_index: dict) -> dict:
+    """
+    Resolve VAR type="link" elements to linked element references.
+
+    Returns dict mapping VAR id -> linked element.
+
+    Args:
+        math_elem: MATH XML element containing VAR children
+        uniqueid_index: Dict from _build_uniqueid_index()
+
+    Returns:
+        {'VAR_ID': linked_element, ...}
+    """
+    linked = {}
+
+    for var in math_elem.findall('VAR'):
+        if var.get('type') == 'link':
+            var_id = var.get('id')
+            linkid = var.get('linkid')
+            if var_id and linkid and linkid in uniqueid_index:
+                linked[var_id] = uniqueid_index[linkid]
+
+    return linked
+
+
+def parse_xdf_safe(path: str):
+    """
+    Parse XDF file with Latin-1 fallback for non-UTF-8 (German ü, ° etc).
+
+    Returns:
+        ET.Element (root of XDF tree)
+    """
+    try:
+        tree = ET.parse(path)
+        return tree.getroot()
+    except ET.ParseError as e:
+        # Fallback: re-read as Latin-1 (handles German umlauts, degree symbol, etc)
+        try:
+            raw = Path(path).read_bytes()
+            text = raw.decode('latin-1')
+            # Strip any XML declaration that may specify wrong encoding
+            text = re.sub(r'<\?xml[^?]*\?>', '<?xml version="1.0" encoding="utf-8"?>', text, count=1)
+            return ET.fromstring(text)
+        except Exception as e2:
+            raise ET.ParseError(f"Failed to parse XDF (tried UTF-8 and Latin-1): {e2}")
+
+
+def scale_from_equation_enhanced(eq: str, axis_context: dict = None,
+                                  linked_vars: dict = None) -> tuple:
+    """
+    Extract (factor, offset, mask, note) from equation.
+
+    For linear equations (factor*X + offset), extracts factor and offset directly.
+    For non-linear equations, attempts evaluation at X=0, X=1, X=2 to detect pattern.
+
+    Args:
+        eq: Equation string (e.g., "X*2", "X/10-40", "if(X>50;100;0)")
+        axis_context: Optional axis context for multi-variable equations
+        linked_vars: Optional linked variable values
+
+    Returns:
+        (factor, offset, mask, note)
+        factor, offset: strings or "1"/"0" if non-linear
+        mask: int or None (for bitfield detection)
+        note: error/warning message, or "" if successful
+    """
+    eq = (eq or "X").strip()
+    mask = None
+
+    # Detect bitfield: X & 0xNN
+    m = re.search(r"&\s*(0x[0-9A-Fa-f]+|\d+)", eq)
+    if m:
+        mask = int(m.group(1), 16 if m.group(1).lower().startswith("0x") else 10)
+
+    # Try to extract linear factor/offset by evaluating at X=0, X=1, X=2
+    b, err_b = evaluate_math(eq, 0, axis_context, linked_vars)
+    one, err_one = evaluate_math(eq, 1, axis_context, linked_vars)
+    two, err_two = evaluate_math(eq, 2, axis_context, linked_vars)
+
+    if None in (b, one, two):
+        # Non-linear or evaluation failed
+        return "1", "0", mask, f"non-linear equation '{eq}'"
+
+    # Calculate factor (slope)
+    factor = one - b
+
+    # Check if linear (two should equal factor*2 + b within tolerance)
+    if abs(two - (factor * 2 + b)) > 1e-9 and mask is None:
+        return "1", "0", mask, f"non-linear equation '{eq}'"
+
+    # Format as strings (int if integer value, else repr)
+    def fmt_num(v):
+        if isinstance(v, float) and v.is_integer():
+            v = int(v)
+        return repr(v)
+
+    return fmt_num(factor), fmt_num(b), mask, ""
 
 
 def _evaleq(eq: str, x: float):
@@ -180,8 +432,8 @@ def _major_minor(cats):
 
 
 def parse_xdf(path: str) -> list:
-    tree = ET.parse(path)
-    root = tree.getroot()
+    """Parse XDF file and extract all elements."""
+    root = parse_xdf_safe(path)
     hdr = root.find("XDFHEADER")
     defaults = hdr.find("DEFAULTS") if hdr is not None else None
     signed_default = (defaults is not None and defaults.get("signed") == "1")
@@ -191,13 +443,16 @@ def parse_xdf(path: str) -> list:
             # category index is hex like 0x1; CATEGORYMEM references decimal
             catnames[str(int(c.get("index"), 16))] = c.get("name", "")
 
+    # NEW: Build uniqueid index for linked-var resolution
+    uniqueid_index = _build_uniqueid_index(root)
+
     items = []
     for el in root.findall("XDFCONSTANT"):
-        items.append(_scalar(el, catnames, signed_default))
+        items.append(_scalar(el, catnames, signed_default, uniqueid_index))
     for el in root.findall("XDFFLAG"):
-        items.append(_flag(el, catnames))
+        items.append(_flag(el, catnames, uniqueid_index))
     for el in root.findall("XDFTABLE"):
-        t = _table(el, catnames, signed_default)
+        t = _table(el, catnames, signed_default, uniqueid_index)
         if t:
             items.append(t)
     return [i for i in items if i]
@@ -213,9 +468,18 @@ def _math_eq(el):
     return m.get("equation", "X") if m is not None else "X"
 
 
-def _scalar(el, catnames, signed_default):
+def _scalar(el, catnames, signed_default, uniqueid_index):
     addr, bits, _r, _c = _embed(el)
-    factor, offset, mask, note = scale_from_equation(_math_eq(el))
+
+    # NEW: Extract linked vars and use enhanced equation handler
+    math_elem = el.find("MATH")
+    linked_elems = _resolve_linked_vars(math_elem, uniqueid_index) if math_elem is not None else {}
+    equation = _math_eq(el)
+    factor, offset, mask, note = scale_from_equation_enhanced(
+        equation,
+        linked_vars={k: None for k in linked_elems.keys()}
+    )
+
     bitoff = 0
     if mask is not None:
         nb, bitoff = _bits_from_mask(mask)
@@ -230,7 +494,7 @@ def _scalar(el, catnames, signed_default):
                    bitoff=bitoff, enum=enum, major=major, minor=minor, note=note)
 
 
-def _flag(el, catnames):
+def _flag(el, catnames, uniqueid_index):
     addr, bits, _r, _c = _embed(el)
     mask = el.find("mask")
     maskv = int(mask.text, 16) if mask is not None and mask.text else 1
@@ -250,13 +514,22 @@ def _axis_labels(ax):
     return labels
 
 
-def _table(el, catnames, signed_default):
+def _table(el, catnames, signed_default, uniqueid_index):
     axes = {ax.get("id"): ax for ax in el.findall("XDFAXIS")}
     z = axes.get("z")
     if z is None:
         return None
     addr, bits, rows, cols = _embed(z)
-    factor, offset, mask, note = scale_from_equation(_math_eq(z))
+
+    # NEW: Extract linked vars and use enhanced equation handler
+    math_elem = z.find("MATH")
+    linked_elems = _resolve_linked_vars(math_elem, uniqueid_index) if math_elem is not None else {}
+    equation = _math_eq(z)
+    factor, offset, mask, note = scale_from_equation_enhanced(
+        equation,
+        linked_vars={k: None for k in linked_elems.keys()}
+    )
+
     x, y = axes.get("x"), axes.get("y")
     col_labels = _axis_labels(x) if x is not None else []
     row_labels = _axis_labels(y) if y is not None else []
