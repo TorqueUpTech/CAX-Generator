@@ -1,7 +1,7 @@
 """Headless test for the Can-Display EXPORT path (.cax -> .canmod).
 
 CAX-Generator owns the .cax -> .canmod half; the .canmod -> CANDISP.DB half (and its
-tests) live in the standalone CANDISP-DB project. Runs Qt offscreen.
+tests) live in the standalone GM Can Display Configurator project. Runs Qt offscreen.
 Run:  python app/_export_test.py
 """
 import os

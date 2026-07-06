@@ -6,8 +6,8 @@ definition (addr / datatype / scaling / units / enum) out of a parsed CaxFile fo
 calibrations the user ticks and writes a `.canmod` JSON (per-OS mod *definitions*, no
 values).
 
-`.canmod` is the handoff to the standalone **CANDISP-DB** tool, which owns the
-`.canmod` -> CANDISP.DB (build/browse) half plus the binary format itself.
+`.canmod` is the handoff to the standalone **GM Can Display Configurator**, which owns
+the `.canmod` -> CANDISP.DB (build/browse) half plus the binary format itself.
 
 GM calibrations are big-endian (PowerPC / Gen-IV). MVP scope: single-value (Val)
 calibrations with one byte-aligned address. Multi-column tables (Col/Map) and

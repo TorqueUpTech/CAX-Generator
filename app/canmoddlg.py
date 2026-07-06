@@ -4,7 +4,7 @@ canmoddlg — PySide6 Export dialog for the Can-Display cal-mod pipeline.
   * ExportToCanDisplayDialog: tick the calibrations to expose as modifications ->
     write a `.canmod` definition file (field defs, no values).
 
-`.canmod` is the handoff to the standalone CANDISP-DB tool, which owns the
+`.canmod` is the handoff to the standalone GM Can Display Configurator, which owns the
 `.canmod` -> CANDISP.DB half. All extraction logic is in the Qt-free `canmod`
 module (unit-tested); this is a thin GUI wrapper.
 """
