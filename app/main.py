@@ -620,9 +620,6 @@ class MainWindow(QMainWindow):
         cde = QAction("Export → To &Can-Display…", self)
         cde.triggered.connect(self.export_to_candisplay)
         t.addAction(cde)
-        cdb = QAction("&Build Can-Display DB…", self)
-        cdb.triggered.connect(self.build_candisplay_db)
-        t.addAction(cdb)
         vm = self.menuBar().addMenu("&View")
         tm = vm.addMenu("&Theme")
         from PySide6.QtGui import QActionGroup
@@ -2008,13 +2005,24 @@ class MainWindow(QMainWindow):
         if self.cax is None:
             QMessageBox.information(self, APP_NAME, "Open a .cax file first.")
             return
+        import canmod
         from canmoddlg import ExportToCanDisplayDialog
-        ExportToCanDisplayDialog(self.cax, self).exec()
+        osid = canmod.osid_from_filename(getattr(self, "path", "") or "")   # OS number from the cax file name
+        ExportToCanDisplayDialog(self.cax, self, module=self._candisplay_module(), osid=osid).exec()
 
-    def build_candisplay_db(self):
-        """Combine .canmod files + dialed-in values -> CANDISP.DB for the SD card."""
-        from canmoddlg import BuildCanDisplayDbDialog
-        BuildCanDisplayDbDialog(self).exec()
+    def _candisplay_module(self):
+        """Infer the Can-Display module (T43/E38) from the loaded file's controller,
+        so the export dialog pre-selects it. Engine controllers (E**) -> E38, trans
+        controllers (T**) -> T43; None if unknown (dialog keeps its default)."""
+        if not getattr(self, "path", None):
+            return None
+        stem = os.path.splitext(os.path.basename(self.path))[0]
+        ctrl = (segmod.controller_for_os(stem) or "").upper()
+        if ctrl.startswith("E"):
+            return "E38"
+        if ctrl.startswith("T"):
+            return "T43"
+        return None
 
     # ---- compare two files by address ---------------------------------------
     def compare_by_address(self):
