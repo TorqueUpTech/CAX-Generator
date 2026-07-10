@@ -34,8 +34,8 @@ def osid_from_filename(name: str) -> str:
     return ""
 
 # CalModDb::Kind
-MODULE_KIND = {"T43": 0, "E38": 1}
-KIND_NAME = {0: "T43", 1: "E38"}
+MODULE_KIND = {"T43": 0, "E38": 1, "E67": 2}
+KIND_NAME = {0: "T43", 1: "E38", 2: "E67"}
 
 # Where the OSID (OS part number) lives in each module image
 # (osid_format: 0=ascii,1=be-uint,2=le-uint). Used when the .cax has no [OS] PCM_OSID.
@@ -48,8 +48,12 @@ KIND_NAME = {0: "T43", 1: "E38"}
 DEFAULT_OSID_LOCATOR = {
     "T43": {"offset": 0x6000C, "len": 8, "format": "ascii"},
     "E38": {"offset": 0xC060,  "len": 4, "format": "be"},
+    # E67 shares the E38 Gen-IV memory map: OS part number as a 4-byte BE-uint @0xC060
+    # (verified on 12656942 -> 00 C1 21 2E). The dash recomputes checksums with the same
+    # E38 six-segment @0x10000 table (FlashPrepare::prepareE67 == prepareE38).
+    "E67": {"offset": 0xC060,  "len": 4, "format": "be"},
 }
-# E38 calibration (Cal) part number location -- for display only, not the mod key.
+# E38/E67 calibration (Cal) part number location -- for display only, not the mod key.
 E38_CAL_LOCATOR = {"offset": 0xC028, "len": 4, "format": "be"}
 _FMT = {"ascii": 0, "be": 1, "le": 2}
 

@@ -2011,13 +2011,16 @@ class MainWindow(QMainWindow):
         ExportToCanDisplayDialog(self.cax, self, module=self._candisplay_module(), osid=osid).exec()
 
     def _candisplay_module(self):
-        """Infer the Can-Display module (T43/E38) from the loaded file's controller,
-        so the export dialog pre-selects it. Engine controllers (E**) -> E38, trans
-        controllers (T**) -> T43; None if unknown (dialog keeps its default)."""
+        """Infer the Can-Display module (T43/E38/E67) from the loaded file's controller,
+        so the export dialog pre-selects it. E67 controllers -> E67; other engine
+        controllers (E**) -> E38; trans controllers (T**) -> T43; None if unknown
+        (dialog keeps its default)."""
         if not getattr(self, "path", None):
             return None
         stem = os.path.splitext(os.path.basename(self.path))[0]
         ctrl = (segmod.controller_for_os(stem) or "").upper()
+        if ctrl.startswith("E67"):
+            return "E67"
         if ctrl.startswith("E"):
             return "E38"
         if ctrl.startswith("T"):

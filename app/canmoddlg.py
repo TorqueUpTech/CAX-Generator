@@ -46,7 +46,7 @@ class ExportToCanDisplayDialog(QDialog):
         row = QHBoxLayout()
         row.addWidget(QLabel("Module:"))
         self.module = QComboBox()
-        self.module.addItems(["T43", "E38"])
+        self.module.addItems(["T43", "E38", "E67"])
         if module:                              # inferred from the loaded controller
             i = self.module.findText(module.upper())
             if i >= 0:
