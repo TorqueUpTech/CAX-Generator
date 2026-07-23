@@ -57,13 +57,20 @@ class A2lPickerDialog(QDialog):
         file_layout.addStretch()
         layout.addLayout(file_layout)
 
-        # Search field
+        # Search field and Select All button
         search_layout = QHBoxLayout()
         search_layout.addWidget(QLabel("Search:"))
         self.search_field = QLineEdit()
         self.search_field.setPlaceholderText("Type to filter calibrations...")
         self.search_field.textChanged.connect(self._on_search_changed)
         search_layout.addWidget(self.search_field)
+        search_layout.addStretch()
+        self.select_all_btn = QPushButton("Select All")
+        self.select_all_btn.clicked.connect(self._select_all)
+        search_layout.addWidget(self.select_all_btn)
+        self.clear_btn = QPushButton("Clear All")
+        self.clear_btn.clicked.connect(self._clear_all)
+        search_layout.addWidget(self.clear_btn)
         layout.addLayout(search_layout)
 
         # Splitter: list on left, preview on right
@@ -98,14 +105,6 @@ class A2lPickerDialog(QDialog):
 
         # Buttons
         button_layout = QHBoxLayout()
-        self.select_all_btn = QPushButton("Select All")
-        self.select_all_btn.clicked.connect(self._select_all)
-        button_layout.addWidget(self.select_all_btn)
-
-        self.clear_btn = QPushButton("Clear All")
-        self.clear_btn.clicked.connect(self._clear_all)
-        button_layout.addWidget(self.clear_btn)
-
         button_layout.addStretch()
 
         self.import_btn = QPushButton("Import Selected")
