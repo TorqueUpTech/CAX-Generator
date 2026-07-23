@@ -87,13 +87,12 @@ class A2lPickerDialog(QDialog):
         preview_layout.addWidget(QLabel("Preview:"))
         self.preview_text = QTextEdit()
         self.preview_text.setReadOnly(True)
-        self.preview_text.setMaximumWidth(400)
         preview_layout.addWidget(self.preview_text)
         preview_widget = _create_widget(preview_layout)
         splitter.addWidget(preview_widget)
 
-        splitter.setStretchFactor(0, 2)
-        splitter.setStretchFactor(1, 1)
+        splitter.setStretchFactor(0, 1)
+        splitter.setStretchFactor(1, 2)
         layout.addWidget(splitter)
 
         # Status/warnings
