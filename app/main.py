@@ -19,7 +19,7 @@ from PySide6.QtGui import (QAction, QKeySequence, QShortcut, QStandardItem,
 # detail pane and deletes that widget mid-emission, which crashes. Defer with
 # QTimer.singleShot(0, ...). See _on_datatype_changed.
 from PySide6.QtWidgets import (
-    QAbstractItemView, QApplication, QCheckBox, QComboBox, QFileDialog,
+    QAbstractItemView, QApplication, QCheckBox, QComboBox, QDialog, QFileDialog,
     QFileIconProvider, QFormLayout, QGroupBox, QHBoxLayout, QInputDialog, QLabel,
     QLineEdit, QListWidget, QListWidgetItem, QMainWindow, QMenu, QMessageBox,
     QPlainTextEdit, QPushButton, QScrollArea, QSpinBox, QSplitter, QStyle,
@@ -597,6 +597,9 @@ class MainWindow(QMainWindow):
         ix = QAction("&Import from XDF (TunerPro)…", self)
         ix.triggered.connect(self.import_xdf)
         t.addAction(ix)
+        ia = QAction("&Import from A2L (ASAP2)…", self)
+        ia.triggered.connect(self.import_a2l)
+        t.addAction(ia)
         ex = QAction("&Export to XDF (TunerPro)…", self)
         ex.triggered.connect(self.export_xdf)
         t.addAction(ex)
@@ -1973,6 +1976,33 @@ class MainWindow(QMainWindow):
         appsettings.set_last_open_dir(os.path.dirname(path))
         QMessageBox.information(self, APP_NAME,
                                f"Exported {n} definitions to\n{path}")
+
+    def import_a2l(self):
+        """Import selected calibrations from A2L (ASAP2) file."""
+        if self.cax is None or not self.cax.sections:
+            QMessageBox.information(self, APP_NAME, "Open or import a file first.")
+            return
+
+        import a2limport
+        from a2l_picker_dialog import A2lPickerDialog
+        import re
+
+        # Get segment ranges for address validation
+        stem = os.path.splitext(os.path.basename(self.path))[0] if self.path else ""
+        parts = re.split(r"[_\-.]", stem)
+        controller = parts[0].upper() if parts else ""
+        m = re.search(r"\d{8}", stem)
+        os_id = m.group(0) if m else ""
+        segs = segmap.cached_segments(os_id) or \
+               segmap.cached_segments_for_controller(controller)[0]
+
+        # Launch picker dialog
+        dialog = A2lPickerDialog(self, cax=self.cax, segments=segs)
+        if dialog.exec() == QDialog.Accepted:
+            cf.validate(self.cax)
+            self._reload_tree()
+            self._on_edited()
+            QMessageBox.information(self, APP_NAME, "A2L import complete.")
 
     def run_backup_now(self):
         dest = appsettings.backup_dest()
