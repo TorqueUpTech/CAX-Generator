@@ -272,9 +272,32 @@ def import_selected_to_cax(cax, selected_items: List[A2lCalibration], segments=N
     """
     import caxformat as cf
     import segmap
+    import idgen
 
     imported = 0
     warnings = []
+
+    # Build id_factory for new sections
+    reserved = {s.name for s in cax.sections}
+
+    def make_id(seg):
+        """Generate a new unique ID for the segment."""
+        # Try to use template if available
+        try:
+            import appsettings
+            tmpl = appsettings.id_template(seg, idgen.DEFAULT_ID_TEMPLATES.get(seg, ""))
+            nid = idgen.next_id(reserved, tmpl, appsettings.id_start(seg)) if tmpl else None
+        except:
+            nid = None
+
+        # Fallback: simple X###N format
+        if not nid:
+            n = 1
+            while f"X{seg or 0}{n:03d}" in reserved:
+                n += 1
+            nid = f"X{seg or 0}{n:03d}"
+        reserved.add(nid)
+        return nid
 
     for item in selected_items:
         if item.address is None:
@@ -301,7 +324,17 @@ def import_selected_to_cax(cax, selected_items: List[A2lCalibration], segments=N
         if existing_section:
             sec = existing_section
         else:
-            sec = cf.Section(cax.next_id())
+            # Determine segment from address
+            seg = "1"  # Default to OS
+            if segments and item.address:
+                phys = segmap.classify(item.address, segments)
+                if phys:
+                    seg_map = {"OS": "1", "Engine": "2", "EngineDiag": "3", "Trans": "4",
+                              "Diag": "5", "TransDiag": "5", "Fuel": "6", "System": "7",
+                              "Speedo": "8", "BootBlock": "1", "Boot Block": "1"}
+                    seg = seg_map.get(phys, "1")
+
+            sec = cf.Section(make_id(seg))
 
         # Add/update DESC line
         desc_lines = [line for line in sec.lines if not (line.is_record and line.key and line.key.startswith('DESC'))]
@@ -310,9 +343,9 @@ def import_selected_to_cax(cax, selected_items: List[A2lCalibration], segments=N
                                      fields=[item.annotation], edited=True))
         sec.lines = desc_lines
 
-        # Update/add VIEW line
-        view_rec = sec.get('VIEW')
-        if view_rec is None:
+        # Update/add VIEW line (only if new section)
+        if not existing_section:
+            # Determine segment from address
             seg = "1"  # Default to OS
             if segments and item.address:
                 phys = segmap.classify(item.address, segments)
