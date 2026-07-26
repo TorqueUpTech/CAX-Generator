@@ -27,12 +27,13 @@ class A2lCalibration:
     address: Optional[int]        # Hex address from CHARACTERISTIC
     annotation: str = ""          # Description from ANNOTATION_TEXT
     compu_method: str = ""        # Reference to COMPU_METHOD
-    compu_type: str = ""          # 'LINEAR' (RAT_FUNC) or 'LOOKUP' (TAB_INTP) or 'UNKNOWN'
-    factor: str = "1"             # Scale from COEFFS
-    offset: str = "0"             # Offset from COEFFS
+    compu_type: str = ""          # 'LINEAR' (RAT_FUNC), 'LOOKUP' (TAB_INTP), 'ENUM' (COMPU_PHYS), 'UNKNOWN'
+    factor: str = "1"             # Scale from COEFFS (LINEAR only)
+    offset: str = "0"             # Offset from COEFFS (LINEAR only)
     min_val: float = 0.0
     max_val: float = 0.0
     data_type: str = ""           # RL_VALUE_UB, RL_VALUE_FL, etc.
+    enum_values: List[str] = field(default_factory=list)  # State labels for ENUM type
     note: str = ""                # Warnings (e.g., "complex lookup table")
 
 
@@ -60,7 +61,7 @@ def parse_a2l_minimal(path: str) -> List[A2lCalibration]:
 
     lines = text.split('\n')
 
-    # Build COMPU_METHOD index
+    # Build COMPU_METHOD index (LINEAR and LOOKUP)
     compu_methods = {}
     i = 0
     while i < len(lines):
@@ -79,6 +80,22 @@ def parse_a2l_minimal(path: str) -> List[A2lCalibration]:
                 }
         i += 1
 
+    # Build COMPU_PHYS index (ENUM/state definitions)
+    compu_phys = {}
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+
+        if line.startswith('/begin COMPU_PHYS'):
+            # Extract COMPU_PHYS name and enum values
+            parts = line.split()
+            if len(parts) >= 3:
+                cp_name = parts[2]
+                enum_values = _parse_compu_phys(lines, i)
+                if enum_values:
+                    compu_phys[cp_name] = enum_values
+        i += 1
+
     # Extract calibrations (CHARACTERISTIC elements)
     items = []
     i = 0
@@ -87,7 +104,7 @@ def parse_a2l_minimal(path: str) -> List[A2lCalibration]:
 
         if line.startswith('/begin CHARACTERISTIC'):
             # Extract CHARACTERISTIC name and data
-            cal = _parse_characteristic(lines, i, compu_methods)
+            cal = _parse_characteristic(lines, i, compu_methods, compu_phys)
             if cal:
                 items.append(cal)
         i += 1
@@ -146,7 +163,40 @@ def _parse_compu_method(lines: List[str], start_idx: int) -> Tuple[str, str, str
     return compu_type, factor, offset
 
 
-def _parse_characteristic(lines: List[str], start_idx: int, compu_methods: Dict) -> Optional[A2lCalibration]:
+def _parse_compu_phys(lines: List[str], start_idx: int) -> List[str]:
+    """
+    Parse COMPU_PHYS (enumeration) block starting at start_idx.
+
+    Returns: List of state labels (e.g., ["Off", "On", "Standby"])
+    """
+    enum_values = []
+    i = start_idx + 1
+
+    while i < len(lines):
+        line = lines[i].strip()
+
+        if line.startswith('/end COMPU_PHYS'):
+            break
+
+        # Look for PHYS (physical value) entries like:
+        # PHYS "Off"  or  PHYS Off  or  1 "On"
+        if line and (line.startswith('PHYS') or line[0].isdigit()):
+            # Extract quoted string or word
+            match = re.search(r'"([^"]*)"', line)
+            if match:
+                enum_values.append(match.group(1))
+            else:
+                # Fallback: try unquoted word after PHYS keyword
+                parts = line.split()
+                if len(parts) > 1 and parts[0] == 'PHYS':
+                    enum_values.append(parts[1])
+
+        i += 1
+
+    return enum_values if enum_values else []
+
+
+def _parse_characteristic(lines: List[str], start_idx: int, compu_methods: Dict, compu_phys: Dict = None) -> Optional[A2lCalibration]:
     """
     Parse CHARACTERISTIC block starting at start_idx.
 
@@ -228,16 +278,23 @@ def _parse_characteristic(lines: List[str], start_idx: int, compu_methods: Dict)
     if not title or address is None:
         return None
 
-    # Get factor/offset from COMPU_METHOD
+    # Get factor/offset from COMPU_METHOD, or enum values from COMPU_PHYS
     compu_type = 'UNKNOWN'
     factor = '1'
     offset = '0'
+    enum_values = []
     note = ""
 
     if compu_method:
         # Strip any leading whitespace/quotes from compu_method name
         cm_key = compu_method.strip('\'"')
-        if cm_key in compu_methods:
+
+        # Check COMPU_PHYS first (enumerations)
+        if compu_phys and cm_key in compu_phys:
+            compu_type = 'ENUM'
+            enum_values = compu_phys[cm_key]
+        # Then check COMPU_METHOD (linear/lookup)
+        elif cm_key in compu_methods:
             cm_info = compu_methods[cm_key]
             compu_type = cm_info['type']
             factor = cm_info['factor']
@@ -258,17 +315,18 @@ def _parse_characteristic(lines: List[str], start_idx: int, compu_methods: Dict)
         min_val=min_val,
         max_val=max_val,
         data_type=data_type,
+        enum_values=enum_values,
         note=note
     )
 
 
-def import_selected_to_cax(cax, selected_items: List[A2lCalibration], segments=None):
+def import_selected_to_cax(cax, selected_items: List[A2lCalibration], segments=None, allow_overwrite=False):
     """
     Import selected A2L calibrations into loaded .cax file.
 
     For each selected calibration:
-    1. Check if address already exists in .cax (warn)
-    2. Extract factor/offset from A2L COMPU_METHOD
+    1. Check if address already exists in .cax (warn or overwrite)
+    2. Extract factor/offset from A2L COMPU_METHOD or enum labels
     3. Copy annotation to DESC
     4. Update or create .cax Section
 
@@ -276,6 +334,7 @@ def import_selected_to_cax(cax, selected_items: List[A2lCalibration], segments=N
         cax: Loaded .cax (from caxformat.read())
         selected_items: List of A2lCalibration to import
         segments: Optional segment ranges (for address validation)
+        allow_overwrite: If True, overwrite existing calibrations at same address
 
     Returns:
         (imported_count, warnings_list)
@@ -325,13 +384,21 @@ def import_selected_to_cax(cax, selected_items: List[A2lCalibration], segments=N
                         addr = int(addr_hex, 16)
                         if addr == item.address:
                             existing_section = sec
-                            warnings.append((item.title, f"Cal already exists at 0x{item.address:X}"))
-                            break
+                            if not allow_overwrite:
+                                warnings.append((item.title, f"Cal already exists at 0x{item.address:X} (skipped)"))
+                                break
+                            else:
+                                warnings.append((item.title, f"Cal already exists at 0x{item.address:X} (overwriting)"))
+                                break
                 except (ValueError, IndexError):
                     pass
 
-        # If exists, update; otherwise create new
-        if existing_section:
+        # If exists and not overwriting, skip
+        if existing_section and not allow_overwrite:
+            continue
+
+        # If exists and overwriting, update; otherwise create new
+        if existing_section and allow_overwrite:
             sec = existing_section
         else:
             # Determine segment from address
@@ -372,18 +439,36 @@ def import_selected_to_cax(cax, selected_items: List[A2lCalibration], segments=N
         # Update/add ADDR line
         addr_hex = f"{item.address:X}" if item.address is not None else cf.PLACEHOLDER
         bits = _bits_from_data_type(item.data_type)
-        dtype = "UNM"  # Unsigned numeric (default)
+
+        # Set data type based on compu_type
+        if item.compu_type == 'ENUM':
+            dtype = "SED"  # State-encoded (enum)
+        else:
+            dtype = "UNM"  # Unsigned numeric (default)
 
         sec.lines = [line for line in sec.lines if not (line.is_record and line.key == 'ADDR')]
         sec.lines.append(cf.Line(cf.LineKind.RECORD, "", key="ADDR",
                                 fields=[addr_hex, "0", str(bits), dtype, "0"],
                                 edited=True))
 
-        # Update/add SI_SLOT line
-        sec.lines = [line for line in sec.lines if not (line.is_record and line.key == 'SI_SLOT')]
-        sec.lines.append(cf.Line(cf.LineKind.RECORD, "", key="SI_SLOT",
-                                fields=[cf.PLACEHOLDER, item.factor, item.offset, "0", cf.PLACEHOLDER, cf.PLACEHOLDER, cf.PLACEHOLDER, cf.PLACEHOLDER],
-                                edited=True))
+        # For ENUM calibrations, add enum labels; for others, add SI_SLOT with factor/offset
+        sec.lines = [line for line in sec.lines if not (line.is_record and line.key.startswith('SI_'))]
+
+        if item.compu_type == 'ENUM' and item.enum_values:
+            # Add SI_ENUM with state labels
+            enum_str = ','.join(item.enum_values)
+            sec.lines.append(cf.Line(cf.LineKind.RECORD, "", key="SI_ENUM",
+                                    fields=[enum_str],
+                                    edited=True))
+            # Add IM_ENUM (same as SI for now - user can customize)
+            sec.lines.append(cf.Line(cf.LineKind.RECORD, "", key="IM_ENUM",
+                                    fields=[enum_str],
+                                    edited=True))
+        else:
+            # Add SI_SLOT for numeric calibrations
+            sec.lines.append(cf.Line(cf.LineKind.RECORD, "", key="SI_SLOT",
+                                    fields=[cf.PLACEHOLDER, item.factor, item.offset, "0", cf.PLACEHOLDER, cf.PLACEHOLDER, cf.PLACEHOLDER, cf.PLACEHOLDER],
+                                    edited=True))
 
         # Add to sections if new
         if not existing_section:
