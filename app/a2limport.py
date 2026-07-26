@@ -104,8 +104,8 @@ def _parse_compu_method(lines: List[str], start_idx: int) -> Tuple[str, str, str
       factor, offset: strings
     """
     compu_type = 'UNKNOWN'
-    factor = '1'
-    offset = '0'
+    factor = '1.0'
+    offset = '0.0'
 
     i = start_idx + 1
     while i < len(lines):
@@ -120,6 +120,8 @@ def _parse_compu_method(lines: List[str], start_idx: int) -> Tuple[str, str, str
             # Find COEFFS line
             while i < len(lines):
                 i += 1
+                if i >= len(lines):
+                    break
                 line = lines[i].strip()
                 if line.startswith('COEFFS'):
                     # COEFFS a0 a1 a2 a3 a4 a5
@@ -127,12 +129,12 @@ def _parse_compu_method(lines: List[str], start_idx: int) -> Tuple[str, str, str
                     parts = line.split()
                     if len(parts) >= 3:
                         try:
-                            offset = repr(float(parts[1]))
-                            factor = repr(float(parts[2]))
+                            offset = str(float(parts[1]))  # a0 = offset
+                            factor = str(float(parts[2]))   # a1 = factor
                         except (ValueError, IndexError):
                             pass
                     break
-                if line.startswith('/'):
+                elif line.startswith('/end'):
                     break
 
         # Look for TAB_INTP or TAB_VERB (lookup table)
@@ -188,9 +190,14 @@ def _parse_characteristic(lines: List[str], start_idx: int, compu_methods: Dict)
         elif line.startswith('RL_VALUE_'):
             data_type = line
 
-        # Extract COMPU_METHOD reference
+        # Extract COMPU_METHOD reference (can be standalone or after /begin COMPU_MEASUREMENT)
         elif line.startswith('CM_'):
             compu_method = line
+        elif line.startswith('/begin COMPU_MEASUREMENT'):
+            # COMPU_MEASUREMENT may contain the CM_ reference
+            parts = line.split()
+            if len(parts) >= 3:
+                compu_method = parts[2]
 
         # Extract limits
         elif line.startswith('LOWER_LIMIT'):
@@ -227,14 +234,17 @@ def _parse_characteristic(lines: List[str], start_idx: int, compu_methods: Dict)
     offset = '0'
     note = ""
 
-    if compu_method and compu_method in compu_methods:
-        cm_info = compu_methods[compu_method]
-        compu_type = cm_info['type']
-        factor = cm_info['factor']
-        offset = cm_info['offset']
+    if compu_method:
+        # Strip any leading whitespace/quotes from compu_method name
+        cm_key = compu_method.strip('\'"')
+        if cm_key in compu_methods:
+            cm_info = compu_methods[cm_key]
+            compu_type = cm_info['type']
+            factor = cm_info['factor']
+            offset = cm_info['offset']
 
-        if compu_type == 'LOOKUP':
-            note = "complex lookup table (verify in CAX)"
+            if compu_type == 'LOOKUP':
+                note = "complex lookup table (verify in CAX)"
 
     return A2lCalibration(
         title=title,
