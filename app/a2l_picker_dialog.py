@@ -12,7 +12,7 @@ PySide6 dialog with:
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QListWidget, QListWidgetItem, QFileDialog,
-    QMessageBox, QSplitter, QTextEdit, QProgressDialog
+    QMessageBox, QSplitter, QTextEdit, QProgressDialog, QCheckBox
 )
 from PySide6.QtCore import Qt, QTimer
 from pathlib import Path
@@ -101,6 +101,13 @@ class A2lPickerDialog(QDialog):
         self.status_text.setMaximumHeight(80)
         layout.addWidget(QLabel("Warnings:"))
         layout.addWidget(self.status_text)
+
+        # Options
+        options_layout = QHBoxLayout()
+        self.chk_overwrite = QCheckBox("Allow Overwrite (update existing calibrations at same address)")
+        options_layout.addWidget(self.chk_overwrite)
+        options_layout.addStretch()
+        layout.addLayout(options_layout)
 
         # Buttons
         button_layout = QHBoxLayout()
@@ -250,7 +257,8 @@ Annotation:
 
         try:
             imported, warnings = a2limport.import_selected_to_cax(
-                self.cax, selected, self.segments
+                self.cax, selected, self.segments,
+                allow_overwrite=self.chk_overwrite.isChecked()
             )
 
             progress.close()
