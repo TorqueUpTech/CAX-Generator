@@ -47,6 +47,7 @@ APP_NAME = "Ultimate Cax Generator"
 
 # Shared across all open windows: copied calibration sections + live window refs.
 _CLIPBOARD: list = []          # list[cf.Section] (deep copies)
+_FOLDER_CUT: dict | None = None  # {"seg": str, "major": str, "minor": str} for cut folders
 _OPEN_WINDOWS: list = []       # keep MainWindow refs alive
 
 ROLE_SECTION = Qt.UserRole + 1
@@ -1146,6 +1147,7 @@ class MainWindow(QMainWindow):
 
     # ---- tree authoring: folders define Major/Minor --------------------------
     def _tree_menu(self, pos):
+        global _FOLDER_CUT
         if self.cax is None:
             return
         idx = self.tree.indexAt(pos)
@@ -1162,13 +1164,21 @@ class MainWindow(QMainWindow):
             menu.addAction("New calibration here…",
                            lambda: self._new_cal(seg, "", ""))
         elif kind == "major":
+            menu.addAction("Rename folder…",
+                           lambda: self._rename_folder(seg, major, ""))
             menu.addAction("New Minor sub-folder…",
                            lambda: self._new_folder(seg, major, ""))
             menu.addAction("New calibration here…",
                            lambda: self._new_cal(seg, major, ""))
+            menu.addAction("Cut folder",
+                           lambda: self._cut_folder(seg, major, ""))
         elif kind == "minor":
+            menu.addAction("Rename folder…",
+                           lambda: self._rename_folder(seg, major, minor))
             menu.addAction("New calibration here…",
                            lambda: self._new_cal(seg, major, minor))
+            menu.addAction("Cut folder",
+                           lambda: self._cut_folder(seg, major, minor))
         elif kind == "leaf":
             menu.addAction("Rename calibration…",
                            lambda: self._rename_cal(item.data(ROLE_SECTION)))
@@ -1176,10 +1186,21 @@ class MainWindow(QMainWindow):
             menu.addAction("Delete calibration",
                            lambda: self._delete_cals(self._selected_section_names()
                                                      or [item.data(ROLE_SECTION)]))
-        if _CLIPBOARD:
+
+        # Paste options for folders and calibrations
+        if _FOLDER_CUT or _CLIPBOARD:
             menu.addSeparator()
+        if _FOLDER_CUT:
+            paste_label = f"Paste folder ({_FOLDER_CUT.get('major', 'Major')})"
+            if _FOLDER_CUT.get('minor'):
+                paste_label = f"Paste folder ({_FOLDER_CUT.get('minor')} - sub-folder)"
+            if kind in ("seg", "major"):
+                menu.addAction(paste_label,
+                              lambda: self._paste_folder(seg, major, minor))
+        if _CLIPBOARD:
             menu.addAction(f"Paste {len(_CLIPBOARD)} calibration(s)",
                            lambda: self._paste_cals())
+
         if not menu.isEmpty():
             menu.exec(self.tree.viewport().mapToGlobal(pos))
 
@@ -1314,6 +1335,63 @@ class MainWindow(QMainWindow):
         dlg.show()
         cap_edit.setFocus()
 
+    def _rename_folder(self, seg: str, major: str, minor: str):
+        """Rename a Major or Minor folder. Updates all calibrations in that folder."""
+        if not seg or not major:
+            return
+
+        folder_type = "Minor" if minor else "Major"
+        old_name = minor or major
+        prompt = f"New {folder_type} folder name:"
+
+        new_name, ok = QInputDialog.getText(self, f"Rename {folder_type} folder",
+                                           prompt, text=old_name)
+        new_name = new_name.strip()
+        if not ok or not new_name or new_name == old_name:
+            return
+
+        # Check if the new folder already exists
+        if (seg, major if not minor else new_name, new_name if not minor else minor) in self.folders:
+            QMessageBox.warning(self, APP_NAME,
+                              f"{folder_type} folder '{new_name}' already exists.")
+            return
+
+        # Update the folder in self.folders
+        self.folders.discard((seg, major, minor))
+        if not minor:
+            # Renaming a major folder
+            self.folders.add((seg, new_name, ""))
+        else:
+            # Renaming a minor folder
+            self.folders.add((seg, major, new_name))
+
+        # Update all calibrations in this folder to the new name
+        if self.cax:
+            for sec in self.cax.sections:
+                view = sec.get("VIEW")
+                if not view:
+                    continue
+                f = list(view.fields)
+                while len(f) < 4:
+                    f.append(cf.PLACEHOLDER)
+                # Match calibrations that are in this folder
+                cal_major = f[2] if len(f) > 2 else ""
+                cal_minor = f[3] if len(f) > 3 else ""
+                if not minor:
+                    # Renaming major folder: update if cal is in this major
+                    if cal_major == major:
+                        f[2] = new_name
+                        view.set_fields(f)
+                else:
+                    # Renaming minor folder: update if cal is in this major/minor
+                    if cal_major == major and cal_minor == minor:
+                        f[3] = new_name
+                        view.set_fields(f)
+
+        self._on_edited()
+        self._reload_tree()
+        self.status.showMessage(f"Renamed {folder_type} folder to '{new_name}'")
+
     def _delete_cals(self, names):
         names = [n for n in names if n]
         if not names or self.cax is None:
@@ -1381,6 +1459,69 @@ class MainWindow(QMainWindow):
         self._reload_tree()
         self._on_edited()
         self._show_section(sec)
+
+    def _cut_folder(self, seg: str, major: str, minor: str):
+        """Mark a folder as cut (for later paste)."""
+        global _FOLDER_CUT
+        _FOLDER_CUT = {"seg": seg, "major": major, "minor": minor}
+        folder_type = "Minor" if minor else "Major"
+        folder_name = minor or major
+        self.status.showMessage(f"Cut {folder_type} folder '{folder_name}'")
+
+    def _paste_folder(self, target_seg: str, target_major: str, target_minor: str):
+        """Paste a cut folder. If major folder pasted into major folder, convert to minor."""
+        global _FOLDER_CUT
+        if not _FOLDER_CUT:
+            return
+
+        src_seg = _FOLDER_CUT["seg"]
+        src_major = _FOLDER_CUT["major"]
+        src_minor = _FOLDER_CUT["minor"]
+
+        if src_seg != target_seg:
+            QMessageBox.warning(self, APP_NAME,
+                              "Cannot move folders between segments.")
+            return
+
+        # If pasting a major folder into a major folder, convert source to minor
+        if src_major and target_major and not target_minor and not src_minor:
+            # Moving major "A" into major "B" → becomes minor under B
+            dest_minor = src_major
+            dest_major = target_major
+        else:
+            # Otherwise, just move the folder as-is (replacing target)
+            dest_major = src_major if src_major else target_major
+            dest_minor = src_minor if src_minor else target_minor
+
+        # Remove source folder
+        self.folders.discard((src_seg, src_major, src_minor))
+
+        # Update all calibrations in the source folder to the new location
+        src_seg_num = ct.seg_number(src_seg)
+        if self.cax:
+            for sec in self.cax.sections:
+                view = sec.get("VIEW")
+                if not view:
+                    continue
+                f = list(view.fields)
+                while len(f) < 8:
+                    f.append(cf.PLACEHOLDER)
+                # If calibration was in source folder, move it
+                if ct.seg_number(f[0]) == src_seg_num:
+                    if f[2] == src_major and f[3] == src_minor:
+                        f[2] = dest_major or ""
+                        f[3] = dest_minor or ""
+                        view.set_fields(f)
+
+        # Add destination folder
+        self.folders.add((target_seg, dest_major, dest_minor))
+
+        _FOLDER_CUT = None
+        self._reload_tree()
+        self._on_edited()
+        folder_type = "Minor" if dest_minor else "Major"
+        folder_name = dest_minor or dest_major
+        self.status.showMessage(f"Moved folder to {folder_type} '{folder_name}'")
 
     def _suggest_segment_for_address(self, addr: str, chosen_seg: str) -> str:
         """If the address falls in a different segment than chosen, offer to move
@@ -1895,66 +2036,21 @@ class MainWindow(QMainWindow):
 
     # ---- import TunerPro XDF -------------------------------------------------
     def import_xdf(self):
-        import re
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Import TunerPro XDF", appsettings.last_open_dir(),
-            "XDF files (*.xdf);;All files (*)")
-        if not path:
+        """Pick which XDF definitions to import (a selectable picker, like the A2L
+        importer), instead of importing every definition at once. The dialog owns
+        file browse, parse, segment detection, selection, import + the report."""
+        from xdf_picker_dialog import XdfPickerDialog
+        dlg = XdfPickerDialog(self, cax=self.cax)
+        if dlg.exec() != QDialog.Accepted:
             return
+        # A fresh .cax is created inside the dialog when none was loaded.
         if self.cax is None:
-            self.cax = cf.CaxFile()
+            self.cax = dlg.cax
             self.version = "v7"
             self.folders.clear()
-        # Controller + OS from the XDF filename (e.g. "t42_24231674_…"), to get
-        # segment ranges for address classification.
-        stem = os.path.basename(path)
-        parts = re.split(r"[_\-.]", stem)
-        controller = parts[0].upper() if parts else ""
-        m = re.search(r"\d{8}", stem)
-        os_id = m.group(0) if m else (
-            os.path.splitext(os.path.basename(self.path))[0] if self.path else "")
-        segs = segmap.cached_segments(os_id) or \
-            segmap.cached_segments_for_controller(controller)[0]
-        try:
-            items = xdfimport.parse_xdf(path)
-        except Exception as e:
-            QMessageBox.critical(self, APP_NAME, f"Could not parse XDF:\n{e}")
-            return
-        if not items:
-            QMessageBox.information(self, APP_NAME, "No definitions found in the XDF.")
-            return
-        reserved = {s.name for s in self.cax.sections}
-
-        def id_factory(seg):
-            tmpl = appsettings.id_template(seg, idgen.DEFAULT_ID_TEMPLATES.get(seg, ""))
-            nid = idgen.next_id(reserved, tmpl, appsettings.id_start(seg)) if tmpl else None
-            if not nid:
-                n = 1
-                while f"X{seg or 0}{n:03d}" in reserved:
-                    n += 1
-                nid = f"X{seg or 0}{n:03d}"
-            reserved.add(nid)
-            return nid
-
-        secs, rpt = xdfimport.build_sections(items, segs, id_factory)
-        self.cax.sections.extend(secs)
         cf.validate(self.cax)
         self._reload_tree()
         self._on_edited()
-        seg_note = "" if segs else " (no segment ranges — nothing skipped, VIEW.Seg blank)"
-        lines = [f"Imported {len(secs)} calibrations from {os.path.basename(path)}.",
-                 rpt.summary() + seg_note, ""]
-        if rpt.skipped:
-            lines.append(f"Skipped {len(rpt.skipped)} item(s) outside the flash image "
-                         "(RAM / out-of-range addresses):")
-            lines += [f"  {t}" + (f"  @{a:X}" if a is not None else "  (no address)")
-                      for t, a in rpt.skipped[:60]]
-            lines.append("")
-        if rpt.review:
-            lines.append(f"Needs review ({len(rpt.review)}):")
-            lines += [f"  {t}: {n}" for t, n in rpt.review[:60]]
-        self._text_dialog("XDF import", f"<b>{os.path.basename(path)}</b> "
-                          f"→ controller {controller}, OS {os_id or '?'}", lines)
 
     def export_xdf(self):
         if self.cax is None or not self.cax.sections:
