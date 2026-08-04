@@ -620,10 +620,6 @@ class MainWindow(QMainWindow):
         bk = QAction("&Back up cax/cax8 files now…", self)
         bk.triggered.connect(self.run_backup_now)
         t.addAction(bk)
-        t.addSeparator()
-        cde = QAction("Export → To &Can-Display…", self)
-        cde.triggered.connect(self.export_to_candisplay)
-        t.addAction(cde)
         vm = self.menuBar().addMenu("&View")
         tm = vm.addMenu("&Theme")
         from PySide6.QtGui import QActionGroup
@@ -2124,34 +2120,6 @@ class MainWindow(QMainWindow):
             f"{stats['skipped']} up-to-date, {stats['errors']} errors "
             f"({stats['bytes'] / 1024:.0f} KB).")
         self.status.showMessage(f"Backup: {stats['copied']} copied to {dest}")
-
-    # ---- Can-Display cal-mod DB ---------------------------------------------
-    def export_to_candisplay(self):
-        """Tick calibrations -> a .canmod definition file for the dash pipeline."""
-        if self.cax is None:
-            QMessageBox.information(self, APP_NAME, "Open a .cax file first.")
-            return
-        import canmod
-        from canmoddlg import ExportToCanDisplayDialog
-        osid = canmod.osid_from_filename(getattr(self, "path", "") or "")   # OS number from the cax file name
-        ExportToCanDisplayDialog(self.cax, self, module=self._candisplay_module(), osid=osid).exec()
-
-    def _candisplay_module(self):
-        """Infer the Can-Display module (T43/E38/E67) from the loaded file's controller,
-        so the export dialog pre-selects it. E67 controllers -> E67; other engine
-        controllers (E**) -> E38; trans controllers (T**) -> T43; None if unknown
-        (dialog keeps its default)."""
-        if not getattr(self, "path", None):
-            return None
-        stem = os.path.splitext(os.path.basename(self.path))[0]
-        ctrl = (segmod.controller_for_os(stem) or "").upper()
-        if ctrl.startswith("E67"):
-            return "E67"
-        if ctrl.startswith("E"):
-            return "E38"
-        if ctrl.startswith("T"):
-            return "T43"
-        return None
 
     # ---- compare two files by address ---------------------------------------
     def compare_by_address(self):
