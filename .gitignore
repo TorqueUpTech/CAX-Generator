@@ -3,6 +3,8 @@ CAXEdit/
 
 # Local machine state (paths, recent files, window prefs) written by QSettings
 app/caxedit_settings.ini
+# Per-user calibration name -> TC-ID catalog (local settings only, never shared)
+app/catalog.json
 
 # Python
 __pycache__/
