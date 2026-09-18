@@ -7,6 +7,7 @@ dialogs open in the right place. Stored in the OS-native location
 """
 from __future__ import annotations
 
+import json
 import os
 
 from PySide6.QtCore import QSettings
@@ -45,6 +46,47 @@ def save_dir(version: str) -> str:
 
 def set_save_dir(version: str, path: str) -> None:
     _settings().setValue(f"paths/{version}_dir", path)
+
+
+# ---- Linked OS numbers -------------------------------------------------------
+# A master file (keyed by its OS-number filename stem) can carry a list of other
+# OS numbers whose files share its exact layout. Saving the master then also
+# writes a copy under each linked OS number. Stored as one JSON blob so the whole
+# map lives under a single INI key.
+#   { "12598977": {"targets": ["02598977", "01250150"], "dir": ""} }
+# An empty "dir" means "save the copies in the same folder as the master".
+
+def os_links() -> dict:
+    raw = _settings().value("oslinks/map", "", str)
+    if not raw:
+        return {}
+    try:
+        data = json.loads(raw)
+        return data if isinstance(data, dict) else {}
+    except (ValueError, TypeError):
+        return {}
+
+
+def os_link(stem: str) -> dict | None:
+    """Link entry for a master OS number, or None. Shape: {targets: [...], dir}."""
+    e = os_links().get(stem)
+    if not isinstance(e, dict) or not e.get("targets"):
+        return None
+    return {"targets": list(e.get("targets", [])), "dir": e.get("dir", "")}
+
+
+def set_os_link(stem: str, targets: list[str], dest_dir: str = "") -> None:
+    """Create/replace the link entry for a master. Empty targets removes it."""
+    m = os_links()
+    if targets:
+        m[stem] = {"targets": list(dict.fromkeys(targets)), "dir": dest_dir or ""}
+    else:
+        m.pop(stem, None)
+    _settings().setValue("oslinks/map", json.dumps(m))
+
+
+def remove_os_link(stem: str) -> None:
+    set_os_link(stem, [])
 
 
 def id_template(seg: str, default: str = "") -> str:

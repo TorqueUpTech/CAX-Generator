@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import copy
 import os
+import re
 import subprocess
 import sys
 
@@ -55,6 +56,52 @@ ROLE_KIND = Qt.UserRole + 2     # 'seg' | 'major' | 'minor' | 'leaf'
 ROLE_SEG = Qt.UserRole + 3      # segment label of this node's branch
 ROLE_MAJOR = Qt.UserRole + 4
 ROLE_MINOR = Qt.UserRole + 5
+
+
+_OVERLAP_ID_RE = re.compile(r"user calibration:\s*([A-Za-z]{1,5}\d[A-Za-z0-9]*)",
+                            re.IGNORECASE)
+
+
+def parse_overlap_warnings(text: str):
+    """Parse pasted EFILive overlap warnings into (efilive_subjects, pairs).
+
+    Two shapes appear, e.g.:
+        User calibration: TC0001 overlaps one or more EFILive calibration(s)
+        User calibration: TC0003 overlaps user calibration: TC0179
+
+    - The first names only a subject that overlaps a built-in EFILive cal; the
+      only fix is to remove the subject -> returned in ``efilive_subjects``.
+    - The second names two of the user's own calibrations that overlap; either
+      one may be kept -> returned in ``pairs`` as (subject, counterpart).
+
+    ``efilive_subjects`` preserves first-seen order and is de-duplicated (and
+    excludes ids that appear in a pair). ``pairs`` is de-duplicated as unordered
+    pairs, keeping the first-seen orientation.
+    """
+    efilive, pairs, pair_seen = [], [], set()
+    for line in text.splitlines():
+        ids = _OVERLAP_ID_RE.findall(line)
+        if not ids:
+            continue
+        if len(ids) >= 2:
+            a, b = ids[0], ids[1]
+            if a != b and frozenset((a, b)) not in pair_seen:
+                pair_seen.add(frozenset((a, b)))
+                pairs.append((a, b))
+        else:
+            if ids[0] not in efilive:
+                efilive.append(ids[0])
+    paired = {i for p in pairs for i in p}
+    efilive = [i for i in efilive if i not in paired]
+    return efilive, pairs
+
+
+def _valid_os_name(name: str) -> bool:
+    """A plausible OS-number filename stem: non-empty, no path separators or
+    characters Windows forbids in filenames, and not just dots."""
+    if not name or name.strip(".") == "":
+        return False
+    return not any(c in name for c in '\\/:*?"<>|')
 
 
 # ---- Editor schema: how each record key is presented --------------------------
@@ -576,6 +623,9 @@ class MainWindow(QMainWindow):
             a = QAction(f"Save as {ver.label}…", self)
             a.triggered.connect(lambda _c=False, v=ver.key: self.save_as(v))
             m.addAction(a)
+        dup = QAction("&Duplicate to other OS numbers…", self)
+        dup.triggered.connect(self.duplicate_to_os)
+        m.addAction(dup)
         m.addSeparator()
         pref = QAction("&Preferences…", self); pref.triggered.connect(self.preferences)
         m.addAction(pref)
@@ -591,6 +641,9 @@ class MainWindow(QMainWindow):
         sp = QAction("Verify &segment placement (by address)…", self)
         sp.triggered.connect(self.verify_segment_placement)
         t.addAction(sp)
+        ro = QAction("Remove &overlapping calibrations (paste EFILive warnings)…", self)
+        ro.triggered.connect(self.remove_overlaps_from_warnings)
+        t.addAction(ro)
         su = QAction("Sanitize &units (to valid V8 units)…", self)
         su.triggered.connect(self.sanitize_units)
         t.addAction(su)
@@ -1037,7 +1090,170 @@ class MainWindow(QMainWindow):
             return
         self._dirty = False
         self._update_title()
-        self.status.showMessage(f"Saved {os.path.basename(path)} as {formats.VERSIONS[version].label}")
+        msg = f"Saved {os.path.basename(path)} as {formats.VERSIONS[version].label}"
+        n, errs = self._propagate_os_links(path, version)
+        if n:
+            msg += f" (+{n} linked OS cop{'y' if n == 1 else 'ies'})"
+        self.status.showMessage(msg)
+        if errs:
+            QMessageBox.warning(
+                self, APP_NAME,
+                "The master was saved, but some linked OS copies failed:\n  "
+                + "\n  ".join(errs))
+
+    def _propagate_os_links(self, master_path: str, version: str):
+        """If the just-saved file's OS number has linked OS numbers, write a copy of
+        the current model under each. Returns (written_count, error_messages)."""
+        stem = os.path.splitext(os.path.basename(master_path))[0]
+        link = appsettings.os_link(stem)
+        if not link:
+            return 0, []
+        fmt = formats.VERSIONS[version]
+        dest_dir = link.get("dir") or os.path.dirname(master_path)
+        if not os.path.isdir(dest_dir):
+            return 0, [f"(destination folder missing: {dest_dir})"]
+        n, errs = 0, []
+        for t in link["targets"]:
+            if t == stem or not _valid_os_name(t):
+                continue
+            try:
+                formats.write(self.cax, os.path.join(dest_dir, t + fmt.ext), version)
+                n += 1
+            except (OSError, NotImplementedError) as e:
+                errs.append(f"{t}{fmt.ext}: {e}")
+        return n, errs
+
+    def duplicate_to_os(self):
+        """Write the current file's calibration layout out under one or more other
+        OS numbers. EFILive identifies a .cax/.cax8 purely by its filename (the OS
+        number) — nothing inside the file names the OS — so a custom OS that shares
+        a factory OS's memory layout just needs the same file saved under the custom
+        OS number. Includes any unsaved edits (re-serialized from the open model)."""
+        if self.cax is None:
+            return
+        if not self.path:
+            QMessageBox.information(
+                self, APP_NAME, "Save the file first — its OS number comes from the "
+                "filename, which duplication needs as the source.")
+            return
+        fmt = formats.VERSIONS[self.version]
+        src_dir = os.path.dirname(self.path)
+        src_stem = os.path.splitext(os.path.basename(self.path))[0]
+        existing_link = appsettings.os_link(src_stem)
+
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Duplicate to other OS numbers")
+        v = QVBoxLayout(dlg)
+        v.addWidget(QLabel(
+            f"Source: <b>{os.path.basename(self.path)}</b> ({fmt.label})<br>"
+            "Enter the target OS numbers (one per line, or comma/space separated).<br>"
+            "Each becomes a copy of this layout named <i>&lt;OS&gt;"
+            f"{fmt.ext}</i>."))
+        edit = QPlainTextEdit()
+        edit.setPlaceholderText("02598977\n01250150")
+        if existing_link:
+            edit.setPlainText("\n".join(existing_link["targets"]))
+        v.addWidget(edit, 1)
+
+        v.addWidget(QLabel("Destination folder:"))
+        drow = QWidget(); dh = QHBoxLayout(drow); dh.setContentsMargins(0, 0, 0, 0)
+        dir_edit = QLineEdit((existing_link and existing_link.get("dir")) or src_dir)
+        browse = QPushButton("Browse…")
+        dh.addWidget(dir_edit, 1); dh.addWidget(browse)
+        v.addWidget(drow)
+
+        def _pick():
+            d = QFileDialog.getExistingDirectory(
+                dlg, "Destination folder", dir_edit.text() or src_dir)
+            if d:
+                dir_edit.setText(d)
+        browse.clicked.connect(_pick)
+
+        chk = QCheckBox(
+            f"Auto-save these copies whenever {src_stem}{fmt.ext} is saved")
+        chk.setChecked(existing_link is not None)
+        v.addWidget(chk)
+
+        brow = QWidget(); bh = QHBoxLayout(brow); bh.setContentsMargins(0, 0, 0, 0)
+        ok = QPushButton("Create copies"); cancel = QPushButton("Cancel")
+        bh.addStretch(1); bh.addWidget(cancel); bh.addWidget(ok)
+        v.addWidget(brow)
+        ok.setDefault(True)
+        ok.clicked.connect(dlg.accept); cancel.clicked.connect(dlg.reject)
+        dlg.resize(420, 340)
+        if dlg.exec() != QDialog.Accepted:
+            return
+
+        dest_dir = dir_edit.text().strip() or src_dir
+        remember = chk.isChecked()
+        raw = edit.toPlainText().replace(",", " ").split()
+        # Preserve order, drop duplicates and the source itself.
+        targets, seen = [], set()
+        for t in raw:
+            if t in seen:
+                continue
+            seen.add(t)
+            targets.append(t)
+
+        bad = [t for t in targets if not _valid_os_name(t)]
+        if bad:
+            QMessageBox.warning(
+                self, APP_NAME, "These are not usable OS numbers / filenames:\n  "
+                + "  ".join(bad))
+            return
+        targets = [t for t in targets if t != src_stem]
+        if not targets:
+            # Nothing to copy. Still honour turning the link off.
+            if existing_link and not remember:
+                appsettings.remove_os_link(src_stem)
+                self.status.showMessage(f"Removed OS link for {src_stem}")
+            else:
+                QMessageBox.information(
+                    self, APP_NAME,
+                    "No target OS numbers (other than the source) given.")
+            return
+        if not os.path.isdir(dest_dir):
+            QMessageBox.warning(self, APP_NAME, f"Folder does not exist:\n{dest_dir}")
+            return
+
+        # Persist / clear the link. Store dir only when it differs from the
+        # master's folder, so copies otherwise follow the master if it moves.
+        if remember:
+            appsettings.set_os_link(
+                src_stem, targets, "" if dest_dir == src_dir else dest_dir)
+        elif existing_link:
+            appsettings.remove_os_link(src_stem)
+
+        paths = {t: os.path.join(dest_dir, t + fmt.ext) for t in targets}
+        existing = [t for t, p in paths.items() if os.path.exists(p)]
+        if existing:
+            r = QMessageBox.question(
+                self, APP_NAME,
+                "These already exist and will be overwritten:\n  "
+                + "  ".join(t + fmt.ext for t in existing) + "\n\nContinue?",
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if r != QMessageBox.Yes:
+                return
+
+        done, errs = [], []
+        for t in targets:
+            try:
+                formats.write(self.cax, paths[t], self.version)
+                done.append(t)
+            except (OSError, NotImplementedError) as e:
+                errs.append(f"{t}: {e}")
+        msg = f"Created {len(done)} cop{'y' if len(done) == 1 else 'ies'} in "\
+              f"{dest_dir}:\n  " + "  ".join(t + fmt.ext for t in done)
+        if remember:
+            msg += (f"\n\nLinked: these will now be re-saved automatically whenever "
+                    f"{src_stem}{fmt.ext} is saved.")
+        if errs:
+            msg += "\n\nFailed:\n  " + "\n  ".join(errs)
+        (QMessageBox.warning if errs else QMessageBox.information)(self, APP_NAME, msg)
+        if done:
+            self.status.showMessage(
+                f"Duplicated {os.path.basename(self.path)} to {len(done)} OS number(s)"
+                + (" (linked)" if remember else ""))
 
     def _seg_order(self):
         """V7 segment numbers ordered by their V8 number when 'V8' tree order is
@@ -1410,6 +1626,168 @@ class MainWindow(QMainWindow):
             self._on_edited()
             self._reload_tree()
             self._set_detail_placeholder("Calibration(s) deleted.")
+
+    def remove_overlaps_from_warnings(self):
+        """Paste EFILive's 'overlaps ...' warnings; remove the named user
+        calibrations so the file loads cleanly.
+
+        - Overlaps with a built-in EFILive calibration: the user cal is removed
+          (checkbox list, pre-checked).
+        - Overlaps between two of the user's own calibrations: only one may be
+          removed. The user chooses which to keep, and the kept calibration
+          absorbs the removed one's description text (so nothing is lost)."""
+        if self.cax is None or not self.cax.sections:
+            QMessageBox.information(self, APP_NAME, "Open a file first.")
+            return
+        text, ok = QInputDialog.getMultiLineText(
+            self, "Remove overlapping calibrations",
+            "Paste the EFILive overlap warning lines:", "")
+        if not ok or not text.strip():
+            return
+        efilive, pairs = parse_overlap_warnings(text)
+        if not efilive and not pairs:
+            QMessageBox.information(
+                self, APP_NAME, "No calibration IDs found in the pasted text.\n"
+                "Expected lines like 'User calibration: TC0001 overlaps ...'.")
+            return
+        present = {s.name for s in self.cax.sections}
+
+        def _cap(cal_id):
+            cal = ct.cal_from_section(self.cax.section(cal_id))
+            return cal.caption if cal else ""
+
+        # A pair with only one side present in the file can't be a keep-choice;
+        # fall back to removing the present side. Split accordingly.
+        simple = list(efilive)          # ids removed outright (checkbox list)
+        pair_rows = []                  # (a, b) both present -> keep-which choice
+        missing = [i for i in efilive if i not in present]
+        for a, b in pairs:
+            if a in present and b in present:
+                pair_rows.append((a, b))
+            elif a in present:
+                simple.append(a); missing.append(b)
+            elif b in present:
+                simple.append(b); missing.append(a)
+            else:
+                missing.extend((a, b))
+        simple = [i for i in dict.fromkeys(simple) if i in present]
+
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Remove overlapping calibrations")
+        v = QVBoxLayout(dlg)
+
+        # Master switch: ignore every user-vs-user overlap in one click.
+        ignore_chk = None
+        if pair_rows:
+            ignore_chk = QCheckBox(
+                "Ignore all overlaps between two of my calibrations "
+                "(remove only EFILive overlaps)")
+            f = ignore_chk.font(); f.setBold(True); ignore_chk.setFont(f)
+            v.addWidget(ignore_chk)
+
+        lst = None
+        if simple:
+            v.addWidget(QLabel(
+                "<b>Overlaps a built-in EFILive calibration</b> — these user "
+                "calibrations will be removed (uncheck any to keep):"))
+            lst = QListWidget()
+            for i in simple:
+                it = QListWidgetItem(f"{i}    {_cap(i)}")
+                it.setFlags(it.flags() | Qt.ItemIsUserCheckable)
+                it.setCheckState(Qt.Checked)
+                it.setData(Qt.UserRole, i)
+                lst.addItem(it)
+            v.addWidget(lst, 1)
+
+        pair_widgets = []               # (a, b, combo, merge_chk)
+        pair_boxes = []                 # the QGroupBoxes, for the master switch
+        if pair_rows:
+            pair_lbl = QLabel(
+                "<b>Two of your calibrations overlap</b> — choose which to keep. "
+                "The other is removed and its description merged into the kept one:")
+            v.addWidget(pair_lbl)
+            for a, b in pair_rows:
+                gb = QGroupBox(f"{a} ({_cap(a)})  ⟷  {b} ({_cap(b)})")
+                gl = QVBoxLayout(gb)
+                combo = QComboBox()
+                combo.addItem(f"Keep {a} — remove {b}", (a, b))
+                combo.addItem(f"Keep {b} — remove {a}", (b, a))
+                combo.addItem("Skip (leave both)", None)
+                merge_chk = QCheckBox("Merge removed calibration's description "
+                                      "into the kept one")
+                merge_chk.setChecked(True)
+                combo.currentIndexChanged.connect(
+                    lambda _i, c=combo, m=merge_chk:
+                    m.setEnabled(c.currentData() is not None))
+                gl.addWidget(combo); gl.addWidget(merge_chk)
+                v.addWidget(gb)
+                pair_widgets.append((a, b, combo, merge_chk))
+                pair_boxes.append(gb)
+        if ignore_chk is not None:
+            def _toggle_ignore(on, _boxes=pair_boxes, _lbl=pair_lbl):
+                _lbl.setEnabled(not on)
+                for box in _boxes:
+                    box.setEnabled(not on)
+            ignore_chk.toggled.connect(_toggle_ignore)
+
+        if missing:
+            v.addWidget(QLabel(
+                f"<i>Not in this file (ignored): {', '.join(dict.fromkeys(missing))}</i>"))
+
+        brow = QWidget(); bh = QHBoxLayout(brow); bh.setContentsMargins(0, 0, 0, 0)
+        okb = QPushButton("Apply"); cancel = QPushButton("Cancel")
+        bh.addStretch(1); bh.addWidget(cancel); bh.addWidget(okb)
+        v.addWidget(brow)
+        okb.setDefault(True)
+        okb.clicked.connect(dlg.accept); cancel.clicked.connect(dlg.reject)
+        dlg.resize(560, 460)
+        if lst is None and not pair_rows:
+            QMessageBox.information(
+                self, APP_NAME, "None of the named calibrations are in this file.")
+            return
+        if dlg.exec() != QDialog.Accepted:
+            return
+
+        remove, merges = set(), []       # merges: (kept_id, removed_id)
+        if lst is not None:
+            for i in range(lst.count()):
+                if lst.item(i).checkState() == Qt.Checked:
+                    remove.add(lst.item(i).data(Qt.UserRole))
+        ignore_pairs = ignore_chk.isChecked() if ignore_chk is not None else False
+        for a, b, combo, merge_chk in pair_widgets:
+            if ignore_pairs:
+                continue
+            data = combo.currentData()
+            if data is None:
+                continue
+            kept, removed = data
+            remove.add(removed)
+            if merge_chk.isChecked():
+                merges.append((kept, removed))
+        if not remove:
+            return
+
+        # Merge descriptions before removing (source sections must still exist).
+        merged = 0
+        for kept, removed in merges:
+            if kept in remove:
+                continue  # kept is itself being removed elsewhere; skip merge
+            dst, src = self.cax.section(kept), self.cax.section(removed)
+            if dst and src:
+                merged += cf.merge_descriptions(dst, src)
+
+        before = len(self.cax.sections)
+        self.cax.sections = [s for s in self.cax.sections if s.name not in remove]
+        removed_n = before - len(self.cax.sections)
+        if removed_n:
+            self._on_edited()
+            self._reload_tree()
+            self._set_detail_placeholder(
+                f"Removed {removed_n} overlapping calibration(s)"
+                + (f"; merged {merged} description paragraph(s)." if merged else "."))
+        note = f" (+{merged} desc merged)" if merged else ""
+        self.status.showMessage(
+            f"Removed {removed_n} overlapping calibration(s){note}")
 
     def _new_folder(self, seg: str, major: str, minor: str):
         """Create an empty sub-folder. Its name becomes Major (or Minor)."""

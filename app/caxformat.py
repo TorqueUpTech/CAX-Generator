@@ -78,6 +78,40 @@ class Section:
         return None
 
 
+def merge_descriptions(dst: "Section", src: "Section") -> int:
+    """Append src's DESC.NNN paragraphs into dst (skipping ones dst already has),
+    renumbering to continue dst's sequence. Returns how many were added.
+
+    Used when two overlapping calibrations are merged into one: the surviving
+    calibration keeps the description text of the one being removed.
+    """
+    dst_desc = [ln for ln in dst.lines if (ln.key or "").startswith("DESC")]
+    existing = {(ln.fields[0] if ln.fields else "").strip() for ln in dst_desc}
+    nums = [int(ln.key.split(".")[1]) for ln in dst_desc
+            if ln.key and "." in ln.key and ln.key.split(".")[1].isdigit()]
+    n = (max(nums) + 1) if nums else 1
+    # Insert after the last existing DESC line, else at the top of the section.
+    pos = 0
+    for i, ln in enumerate(dst.lines):
+        if (ln.key or "").startswith("DESC"):
+            pos = i + 1
+    added = 0
+    for ln in src.lines:
+        if not (ln.key or "").startswith("DESC"):
+            continue
+        txt = (ln.fields[0] if ln.fields else "").strip()
+        if not txt or txt in existing:
+            continue
+        newln = Line(LineKind.RECORD, "", key=f"DESC.{n:03d}", fields=[txt],
+                     edited=True)
+        dst.lines.insert(pos, newln)
+        pos += 1
+        n += 1
+        added += 1
+        existing.add(txt)
+    return added
+
+
 @dataclass
 class CaxFile:
     preamble: list[Line] = field(default_factory=list)   # comments before first section
