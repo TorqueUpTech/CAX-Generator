@@ -603,6 +603,35 @@ def build_sections(items, segs, id_factory) -> tuple:
     return sections, report
 
 
+def import_selected_to_cax(cax, selected_items, segs=None):
+    """Import only the chosen XdfItems into an existing cax (mirrors
+    a2limport.import_selected_to_cax, so the XDF picker matches the A2L one).
+    Builds sections for the selection, appends them, and returns
+    (imported_count, XdfReport). Address classification / out-of-flash skipping
+    is handled by build_sections via `segs`."""
+    import idgen
+    reserved = {s.name for s in cax.sections}
+
+    def id_factory(seg):
+        try:
+            import appsettings
+            tmpl = appsettings.id_template(seg, idgen.DEFAULT_ID_TEMPLATES.get(seg, ""))
+            nid = idgen.next_id(reserved, tmpl, appsettings.id_start(seg)) if tmpl else None
+        except Exception:
+            nid = None
+        if not nid:
+            n = 1
+            while f"X{seg or 0}{n:03d}" in reserved:
+                n += 1
+            nid = f"X{seg or 0}{n:03d}"
+        reserved.add(nid)
+        return nid
+
+    secs, report = build_sections(selected_items, segs, id_factory)
+    cax.sections.extend(secs)
+    return len(secs), report
+
+
 # ---- export cax -> XDF -------------------------------------------------------
 def _fmtnum(s: str) -> str:
     try:

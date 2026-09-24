@@ -39,7 +39,7 @@ class A2lCalibration:
 
 def parse_a2l_minimal(path: str) -> List[A2lCalibration]:
     """
-    Parse A2L (ASAP2) file and extract calibrations.
+    Parse A2L (ASAP2) file and extract calibrations (optimized single-pass).
 
     A2L is a text-based format (not XML) with /begin..../end blocks.
     This parser extracts only metadata needed for selection:
@@ -61,8 +61,11 @@ def parse_a2l_minimal(path: str) -> List[A2lCalibration]:
 
     lines = text.split('\n')
 
-    # Build COMPU_METHOD index (LINEAR and LOOKUP)
+    # Single-pass indexing: collect COMPU_METHOD and COMPU_PHYS blocks
     compu_methods = {}
+    compu_phys = {}
+    items = []
+
     i = 0
     while i < len(lines):
         line = lines[i].strip()
@@ -78,15 +81,8 @@ def parse_a2l_minimal(path: str) -> List[A2lCalibration]:
                     'factor': factor,
                     'offset': offset
                 }
-        i += 1
 
-    # Build COMPU_PHYS index (ENUM/state definitions)
-    compu_phys = {}
-    i = 0
-    while i < len(lines):
-        line = lines[i].strip()
-
-        if line.startswith('/begin COMPU_PHYS'):
+        elif line.startswith('/begin COMPU_PHYS'):
             # Extract COMPU_PHYS name and enum values
             parts = line.split()
             if len(parts) >= 3:
@@ -94,19 +90,13 @@ def parse_a2l_minimal(path: str) -> List[A2lCalibration]:
                 enum_values = _parse_compu_phys(lines, i)
                 if enum_values:
                     compu_phys[cp_name] = enum_values
-        i += 1
 
-    # Extract calibrations (CHARACTERISTIC elements)
-    items = []
-    i = 0
-    while i < len(lines):
-        line = lines[i].strip()
-
-        if line.startswith('/begin CHARACTERISTIC'):
+        elif line.startswith('/begin CHARACTERISTIC'):
             # Extract CHARACTERISTIC name and data
             cal = _parse_characteristic(lines, i, compu_methods, compu_phys)
             if cal:
                 items.append(cal)
+
         i += 1
 
     return items

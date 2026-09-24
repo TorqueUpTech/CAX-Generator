@@ -36,11 +36,14 @@ class A2lPickerDialog(QDialog):
         self.cax = cax
         self.segments = segments
         self.a2l_items = []
+        self.a2l_items_filtered = []  # Filtered to CAL area only
         self.selected_items = []
+        self.cal_range = None  # (start, end) for calibration area
 
         self.setWindowTitle("Import A2L Calibrations")
         self.setGeometry(100, 100, 900, 600)
         self._setup_ui()
+        self._detect_cal_range()
 
     def _setup_ui(self):
         """Build UI layout."""
@@ -126,6 +129,34 @@ class A2lPickerDialog(QDialog):
 
         self.setLayout(layout)
 
+    def _detect_cal_range(self):
+        """Detect calibration area range from segments or use default."""
+        if not self.segments:
+            return
+
+        # Find CAL segment range (calibrations are after OS)
+        for seg_name, (start, end) in self.segments.items():
+            if 'CAL' in seg_name.upper() or 'CALIBRATION' in seg_name.upper():
+                self.cal_range = (start, end)
+                break
+
+        # If no explicit CAL, use default for E40 (0x1C0000+)
+        if not self.cal_range:
+            # E40 typical: OS ends at 0x1C0000, CAL starts there
+            self.cal_range = (0x1C0000, 0x200000)  # 1024KB total, OS=1792KB, so CAL would be ~256KB
+
+    def _filter_to_cal_area(self):
+        """Filter A2L items to calibration area only (exclude RAM/I/O)."""
+        # Exclude high addresses (0xFFFF**** = RAM/runtime symbols)
+        # Exclude calibrations starting with "Ve" (RAM variables)
+        # Keep only addresses in the actual binary ROM (0x0 to 0x100000 for 1MB E40)
+        self.a2l_items_filtered = [
+            item for item in self.a2l_items
+            if item.address is not None
+            and item.address < 0x100000
+            and not item.title.startswith('Ve')
+        ]
+
     def _select_file(self):
         """Browse and select A2L file."""
         path, _ = QFileDialog.getOpenFileName(
@@ -136,21 +167,41 @@ class A2lPickerDialog(QDialog):
         if not path:
             return
 
+        # Show progress dialog
+        progress = QProgressDialog(
+            "Parsing A2L file...", None, 0, 0, self
+        )
+        progress.setWindowModality(Qt.WindowModal)
+        progress.show()
+        self.repaint()
+
         # Parse A2L file
         try:
             self.a2l_items = a2limport.parse_a2l_minimal(path)
+            self._filter_to_cal_area()
+            progress.setLabelText(f"Loading {len(self.a2l_items_filtered)} calibrations...")
+            self.repaint()
+
             self.file_label.setText(Path(path).name)
             self._populate_list()
-            self.status_text.setText(f"Loaded {len(self.a2l_items)} calibrations")
+            progress.close()
+            msg = f"Loaded {len(self.a2l_items_filtered)} calibrations (CAL area)"
+            if len(self.a2l_items) > len(self.a2l_items_filtered):
+                msg += f" — filtered {len(self.a2l_items) - len(self.a2l_items_filtered)} OS/other"
+            self.status_text.setText(msg)
         except Exception as e:
+            progress.close()
             QMessageBox.critical(self, "Error", f"Failed to parse A2L file:\n{str(e)}")
             self.file_label.setText("(error)")
 
     def _populate_list(self):
-        """Populate calibration list with checkboxes."""
+        """Populate calibration list with checkboxes in batches (CAL area only)."""
         self.cal_list.clear()
+        self.cal_list.setUpdatesEnabled(False)
 
-        for item in self.a2l_items:
+        # Add items in batches for better performance
+        batch_size = 500
+        for i, item in enumerate(self.a2l_items_filtered):
             # Create checkbox item
             list_item = QListWidgetItem()
             list_item.setText(f"0x{item.address:X} — {item.title}" if item.address else item.title)
@@ -159,6 +210,12 @@ class A2lPickerDialog(QDialog):
             list_item.setData(Qt.UserRole, item)  # Store the A2lCalibration object
 
             self.cal_list.addItem(list_item)
+
+            # Process events every batch to keep UI responsive
+            if (i + 1) % batch_size == 0:
+                self.repaint()
+
+        self.cal_list.setUpdatesEnabled(True)
 
     def _on_search_changed(self):
         """Filter list based on search field."""
@@ -230,7 +287,7 @@ Annotation:
 
     def _import(self):
         """Import selected calibrations into .cax."""
-        if not self.cax:
+        if self.cax is None:
             QMessageBox.warning(self, "Error", "No CAX file loaded")
             return
 
