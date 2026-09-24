@@ -68,16 +68,3 @@ authoritative segment ranges from bin+XML · `idgen` ID templates · `formats`
 version writers · `settings` INI persistence. See `docs/FORMAT.md`,
 `docs/FORMAT_V8.md`.
 
-## Can-Display cal-mod export (Tools menu)
-`canmod` (Qt-free) + `canmoddlg` (dialogs) author the Riverdi Can-Display tune-mod
-DB: **Tools ▸ Export → To Can-Display** (tick cals -> a `.canmod` JSON of field
-defs) and **Tools ▸ Build Can-Display DB** (load `.canmod`, dial a VALUE per field,
-name mods -> `CANDISP.DB` + `CANDISP.TXT`). `canmod.build_candisp_db` is
-BYTE-IDENTICAL to the dash's C++ `CalModDb`; byte contract =
-`C:\TouchGFXProjects\Can-Display\docs\CAL-MOD-DB.md` (v2). GM cals are **big-endian**.
-Supports single-value byte-aligned calibrations (kind-0 overwrite) AND sub-byte
-**bit-flags** within one byte (kind-1 read-modify-write, mask+value). Deferred:
-multi-column tables (Col/Map) + cross-byte bitfields.
-Headless tests: `python app/_canmod_test.py` (byte-match vs the C++ generator) and
-`python app/_canmoddlg_test.py` (offscreen extract→export→build). See the dash-side
-`can-flasher` skill + the `cal-mod-db` / `caxedit-clone` memories.

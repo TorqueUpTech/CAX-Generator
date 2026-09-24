@@ -22,11 +22,7 @@
     `addrcompare` (compare by address) · `segmap` (segment ranges from bin+XML) ·
     `units` (canonical units / sanitize / SI→IM conversion) ·
     `idgen` (ID templates) · `formats` · `settings`.
-  - Core (Qt-free): `canmod` (export a `.cax` field def -> `.canmod`; value->raw
-    bytes; write the Can-Display **CANDISP.DB** binary — byte-identical to the
-    Riverdi dash `CalModDb`, see `Can-Display/docs/CAL-MOD-DB.md`).
-  - GUI: `main.py` (tree + schema-driven record editor) · `canmoddlg` (Tools ▸
-    **Export → To Can-Display** and **Build Can-Display DB** dialogs).
+  - GUI: `main.py` (tree + schema-driven record editor).
   - `_*.py` are throwaway dev/test scripts; `caxedit_settings.ini` and
     `segment_ranges.json` are generated state — don't hand-edit or commit as source.
 - `docs/` — format references.
