@@ -550,6 +550,13 @@ class MainWindow(QMainWindow):
         tb = QToolBar("Launch")
         self.addToolBar(tb)
         ip = QFileIconProvider()
+        # Reload the current file from disk (discards unsaved edits after confirm).
+        reload_act = QAction(self.style().standardIcon(QStyle.SP_BrowserReload),
+                             "Reload", self)
+        reload_act.setToolTip("Reload the open file from disk (Ctrl+R)")
+        reload_act.triggered.connect(self.reload_file)
+        tb.addAction(reload_act)
+        tb.addSeparator()
         for ver, label in (("v7", "EFILive V7.5 Tune"), ("v8", "EFILive V8 Scan&&Tune")):
             exe = appsettings.efilive_exe(ver)
             if exe and os.path.exists(exe):
@@ -601,6 +608,7 @@ class MainWindow(QMainWindow):
             ("Open &Legacy (V7) file…", self.open_legacy, "Ctrl+L"),
             ("&Save", self.save_file, "Ctrl+S"),
             ("Save &Versions (V7 + V8)", self.save_versions, "Ctrl+Shift+S"),
+            ("&Reload from disk", self.reload_file, "Ctrl+R"),
         ]:
             a = QAction(text, self); a.setShortcut(sc); a.triggered.connect(slot)
             m.addAction(a)
@@ -1003,6 +1011,22 @@ class MainWindow(QMainWindow):
             return self.save_as(self.version)
         self._write(self.path, self.version)
 
+    def reload_file(self):
+        """Re-read the currently open file from disk, discarding unsaved edits
+        (after confirmation)."""
+        if not self.path:
+            QMessageBox.information(self, APP_NAME, "No file is open to reload.")
+            return
+        if not os.path.exists(self.path):
+            QMessageBox.warning(self, APP_NAME,
+                                f"File no longer exists on disk:\n{self.path}")
+            return
+        if getattr(self, "_dirty", False) and not self._confirm_discard():
+            return
+        path = self.path
+        self.load(path)
+        self.status.showMessage(f"Reloaded {os.path.basename(path)}")
+
     def save_versions(self):
         """Save the working V7 .cax AND an auto-converted V8 .cax8 (with the
         learned V7->V8 segment remap) in one action."""
@@ -1048,11 +1072,33 @@ class MainWindow(QMainWindow):
         except OSError as e:
             QMessageBox.critical(self, APP_NAME, f"V7 saved, but V8 failed:\n{e}")
             return
+        # 3) Linked OS numbers: build their V8 copies too (same layout/controller).
+        # The linked V7 copies were already written by _write above; this mirrors
+        # that for V8 so Save Versions keeps every linked file in sync.
+        link = appsettings.os_link(stem)
+        linked_done, linked_errs = [], []
+        if link:
+            for t in link["targets"]:
+                if t == stem or not _valid_os_name(t):
+                    continue
+                try:
+                    convert.write_v8(self.cax, os.path.join(v8dir, t + ".cax8"),
+                                     provider=provider, controller=controller,
+                                     cmap=cmap)
+                    linked_done.append(t)
+                except OSError as e:
+                    linked_errs.append(f"{t}.cax8: {e}")
         note = f" ({len(rpt.review)} need review)" if rpt and rpt.review else ""
-        QMessageBox.information(
-            self, APP_NAME,
-            f"Saved both versions:\n\nV7: {self.path}\nV8: {v8path}{note}")
-        self.status.showMessage(f"Saved V7 + V8 ({controller})")
+        msg = f"Saved both versions:\n\nV7: {self.path}\nV8: {v8path}{note}"
+        if linked_done:
+            msg += ("\n\nLinked V8 copies (in " + v8dir + "):\n  "
+                    + "  ".join(t + ".cax8" for t in linked_done))
+        if linked_errs:
+            msg += "\n\nLinked V8 failed:\n  " + "\n  ".join(linked_errs)
+        QMessageBox.information(self, APP_NAME, msg)
+        self.status.showMessage(
+            f"Saved V7 + V8 ({controller})"
+            + (f" + {len(linked_done)} linked V8" if linked_done else ""))
 
     def save_as(self, version: str | None = None):
         if self.cax is None:
@@ -2396,11 +2442,19 @@ class MainWindow(QMainWindow):
         # file's own majority — the file may itself be mis-assigned (the thing we're
         # fixing), which would otherwise propose perpetuating the error.
         phys2num = xdfimport.PHYS_TO_V7SEG
+        # EFILive's own custom calibrations sit in an injected region that doesn't
+        # map to the standard physical segments, so exclude them — they'd always
+        # look "wrong" and just add noise.
+        custom_seg = ct.seg_number("EFILive Custom Calibrations")
         mismatches, id_mismatches = [], []
+        skipped_custom = 0
         reserved = {s.name for s in self.cax.sections}
         for sec in self.cax.sections:
             cal = ct.cal_from_section(sec)
             if not cal:
+                continue
+            if custom_seg and str(cal.seg) == custom_seg:
+                skipped_custom += 1
                 continue
             a = ct._addr_int(sec)
             if a is None:
@@ -2422,9 +2476,11 @@ class MainWindow(QMainWindow):
                     if prop:
                         reserved.add(prop)
                     id_mismatches.append((sec, cal, a, correct, parsed[0], prop))
-        self._show_segverify_dialog(mismatches, id_mismatches, segs, controller, os_id)
+        self._show_segverify_dialog(mismatches, id_mismatches, segs, controller,
+                                    os_id, skipped_custom)
 
-    def _show_segverify_dialog(self, mismatches, id_mismatches, segs, controller, os_id):
+    def _show_segverify_dialog(self, mismatches, id_mismatches, segs, controller,
+                               os_id, skipped_custom=0):
         dlg = QWidget(self, Qt.Window)
         dlg.setWindowTitle("Verify segment placement")
         dlg.resize(840, 620)
@@ -2432,8 +2488,10 @@ class MainWindow(QMainWindow):
         ranges = "  ·  ".join(f"{s.name} " +
                               ",".join(f"{lo:X}-{hi:X}" for lo, hi in s.ranges)
                               for s in segs)
+        skipnote = (f"<br><small>Ignored {skipped_custom} calibration(s) in "
+                    "EFILive Custom Calibrations.</small>" if skipped_custom else "")
         v.addWidget(QLabel(f"<b>{os_id}</b> · controller <b>{controller}</b><br>"
-                           f"<small>{ranges}</small>"))
+                           f"<small>{ranges}</small>{skipnote}"))
         if not mismatches and not id_mismatches:
             v.addWidget(QLabel("✓ Every calibration is in the right segment and its ID "
                                "matches the segment. Nothing to fix."))
