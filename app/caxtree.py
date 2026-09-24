@@ -12,9 +12,12 @@ from dataclasses import dataclass, field
 from caxformat import CaxFile, Section, PLACEHOLDER
 
 
-# Segment number -> friendly name (EFILive convention; editable by the user).
+# Segment number -> friendly name (matches EFILive's navigator.txt numbering;
+# editable by the user). Note segment 0 is the OS/PCM root and segment 1 is
+# EFILive's own custom calibrations (NOT the OS) — see navigator.txt.
 SEGMENT_NAMES: dict[str, str] = {
-    "1": "Operating System",
+    "0": "Operating System",
+    "1": "EFILive Custom Calibrations",
     "2": "Engine Calibration",
     "3": "Engine Diagnostics",
     "4": "Transmission Calibration",

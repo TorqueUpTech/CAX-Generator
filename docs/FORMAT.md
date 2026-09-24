@@ -52,8 +52,12 @@ Segment (VIEW.Seg)              top branch, e.g. "Transmission Calibration"
 ```
 Leaf icon from `VIEW.DisplayType`: 1=Val (single value), 2=Col (column/table), 3=Map (2D grid).
 Segment number→friendly name is an EFILive convention, not stored in the .cax — the editor
-keeps an editable lookup (1=Operating System, 2=Engine, 4=Transmission Calibration,
-5=Transmission Diagnostics, 6=Fuel, 8=Speedo, …); fall back to "Segment N".
+keeps an editable lookup matching EFILive's `navigator.txt`: 0=Operating System (PCM/TCM
+root), **1=EFILive Custom Calibrations**, 2=Engine Calibration, 3=Engine Diagnostics,
+4=Transmission Calibration, 5=Transmission Diagnostics, 6=Fuel System, 7=System,
+8=Speedometer; fall back to "Segment N". (V8/.cax8 segment numbers are controller-specific
+and differ — see FORMAT_V8.md / `V7toV8_Segments.ini`; they are handled by the learned remap,
+not this table.)
 
 ### `[OS]` section
 Defines memory locations of OS info; all values HEX; unsupported = `X`. Observed keys:

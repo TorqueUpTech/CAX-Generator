@@ -17,7 +17,9 @@ import re
 # Per V7-segment default templates (first-letter convention from the .cax docs;
 # seg 7 'System' has no single convention, so it's left blank for the user).
 DEFAULT_ID_TEMPLATES: dict[str, str] = {
-    "1": "A####", "2": "B####", "3": "C####", "4": "D####",
+    "0": "A####",           # OS (seg 0); A = Operating System per the id convention
+    "1": "",                # EFILive Custom Calibrations: no single id convention
+    "2": "B####", "3": "C####", "4": "D####",
     "5": "E####", "6": "F####", "7": "", "8": "G####",
 }
 

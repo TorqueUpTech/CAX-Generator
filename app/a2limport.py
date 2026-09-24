@@ -402,14 +402,14 @@ def import_selected_to_cax(cax, selected_items: List[A2lCalibration], segments=N
             sec = existing_section
         else:
             # Determine segment from address
-            seg = "1"  # Default to OS
+            seg = "0"  # Default to OS (segment 0)
             if segments and item.address:
                 phys = segmap.classify(item.address, segments)
                 if phys:
-                    seg_map = {"OS": "1", "Engine": "2", "EngineDiag": "3", "Trans": "4",
+                    seg_map = {"OS": "0", "Engine": "2", "EngineDiag": "3", "Trans": "4",
                               "Diag": "5", "TransDiag": "5", "Fuel": "6", "System": "7",
-                              "Speedo": "8", "BootBlock": "1", "Boot Block": "1"}
-                    seg = seg_map.get(phys, "1")
+                              "Speedo": "8", "BootBlock": "0", "Boot Block": "0"}
+                    seg = seg_map.get(phys, "0")
 
             sec = cf.Section(make_id(seg))
 
@@ -423,14 +423,14 @@ def import_selected_to_cax(cax, selected_items: List[A2lCalibration], segments=N
         # Update/add VIEW line (only if new section)
         if not existing_section:
             # Determine segment from address
-            seg = "1"  # Default to OS
+            seg = "0"  # Default to OS (segment 0)
             if segments and item.address:
                 phys = segmap.classify(item.address, segments)
                 if phys:
-                    seg_map = {"OS": "1", "Engine": "2", "EngineDiag": "3", "Trans": "4",
+                    seg_map = {"OS": "0", "Engine": "2", "EngineDiag": "3", "Trans": "4",
                               "Diag": "5", "TransDiag": "5", "Fuel": "6", "System": "7",
-                              "Speedo": "8", "BootBlock": "1", "Boot Block": "1"}
-                    seg = seg_map.get(phys, "1")
+                              "Speedo": "8", "BootBlock": "0", "Boot Block": "0"}
+                    seg = seg_map.get(phys, "0")
 
             sec.lines.append(cf.Line(cf.LineKind.RECORD, "", key="VIEW",
                                     fields=[seg, item.title or "", "", "", "1", "1", "0", "0"],
