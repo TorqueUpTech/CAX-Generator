@@ -1375,13 +1375,17 @@ class MainWindow(QMainWindow):
                            lambda: self._new_folder(seg, "", ""))
             menu.addAction("New calibration here…",
                            lambda: self._new_cal(seg, "", ""))
-        elif kind == "major":
+            menu.addAction("Move segment's calibrations to segment…",
+                           lambda: self._move_folder_to_segment(seg, "", ""))
+        if kind == "major":
             menu.addAction("Rename folder…",
                            lambda: self._rename_folder(seg, major, ""))
             menu.addAction("New Minor sub-folder…",
                            lambda: self._new_folder(seg, major, ""))
             menu.addAction("New calibration here…",
                            lambda: self._new_cal(seg, major, ""))
+            menu.addAction("Move folder to segment…",
+                           lambda: self._move_folder_to_segment(seg, major, ""))
             menu.addAction("Cut folder",
                            lambda: self._cut_folder(seg, major, ""))
         elif kind == "minor":
@@ -1389,11 +1393,17 @@ class MainWindow(QMainWindow):
                            lambda: self._rename_folder(seg, major, minor))
             menu.addAction("New calibration here…",
                            lambda: self._new_cal(seg, major, minor))
+            menu.addAction("Move folder to segment…",
+                           lambda: self._move_folder_to_segment(seg, major, minor))
             menu.addAction("Cut folder",
                            lambda: self._cut_folder(seg, major, minor))
         elif kind == "leaf":
             menu.addAction("Rename calibration…",
                            lambda: self._rename_cal(item.data(ROLE_SECTION)))
+            menu.addAction("Move to segment…",
+                           lambda: self._move_cals_to_segment(
+                               self._selected_section_names()
+                               or [item.data(ROLE_SECTION)]))
             menu.addAction("Copy calibration(s)", self._copy_selected)
             menu.addAction("Delete calibration",
                            lambda: self._delete_cals(self._selected_section_names()
@@ -1880,8 +1890,10 @@ class MainWindow(QMainWindow):
                 f = list(view.fields)
                 while len(f) < 8:
                     f.append(cf.PLACEHOLDER)
-                # If calibration was in source folder, move it
-                if ct.seg_number(f[0]) == src_seg_num:
+                # If calibration was in source folder, move it (f[0] is the
+                # segment NUMBER already; compare against the number directly).
+                cur_seg = "" if f[0] == cf.PLACEHOLDER else f[0]
+                if cur_seg == src_seg_num:
                     if f[2] == src_major and f[3] == src_minor:
                         f[2] = dest_major or ""
                         f[3] = dest_minor or ""
@@ -1896,6 +1908,102 @@ class MainWindow(QMainWindow):
         folder_type = "Minor" if dest_minor else "Major"
         folder_name = dest_minor or dest_major
         self.status.showMessage(f"Moved folder to {folder_type} '{folder_name}'")
+
+    def _pick_segment(self, title: str, exclude_label: str = "") -> str | None:
+        """Ask the user for a target segment. Returns the segment NUMBER, or None
+        if cancelled. Offers the known segments (skipping `exclude_label`)."""
+        pairs = [(num, name) for num, name in ct.SEGMENT_NAMES.items()
+                 if name != exclude_label]
+        if not pairs:
+            return None
+        items = [f"{num} · {name}" for num, name in pairs]
+        choice, ok = QInputDialog.getItem(self, APP_NAME, title, items, 0, False)
+        if not ok or not choice:
+            return None
+        return choice.split(" · ", 1)[0]
+
+    def _move_cals_to_segment(self, names):
+        """Change the segment (VIEW.Seg) of the given calibrations, keeping their
+        Major/Minor folder path."""
+        names = [n for n in names if n]
+        if not names or self.cax is None:
+            return
+        seg_num = self._pick_segment(
+            f"Move {len(names)} calibration(s) to segment:")
+        if seg_num is None:
+            return
+        moved = 0
+        for name in names:
+            sec = self.cax.section(name)
+            view = sec.get("VIEW") if sec else None
+            if not view:
+                continue
+            f = list(view.fields)
+            while len(f) < 8:
+                f.append(cf.PLACEHOLDER)
+            f[0] = seg_num
+            view.set_fields(f)
+            moved += 1
+        if moved:
+            self._on_edited()
+            self._reload_tree()
+            self.status.showMessage(
+                f"Moved {moved} calibration(s) to {ct.seg_label(seg_num)}")
+
+    def _move_folder_to_segment(self, seg: str, major: str, minor: str):
+        """Move every calibration in a folder (or a whole segment when major=="")
+        to another segment, preserving the Major/Minor path. Also re-homes any
+        empty user-created folders in that branch."""
+        if self.cax is None:
+            return
+        src_num = ct.seg_number(seg)
+        what = minor or major or seg
+        target = self._pick_segment(f"Move '{what}' to segment:", exclude_label=seg)
+        if target is None or target == src_num:
+            return
+        is_minor = bool(minor)
+        moved = 0
+        for sec in self.cax.sections:
+            view = sec.get("VIEW")
+            if not view:
+                continue
+            f = list(view.fields)
+            while len(f) < 8:
+                f.append(cf.PLACEHOLDER)
+            cur_seg = "" if f[0] == cf.PLACEHOLDER else f[0]
+            if cur_seg != src_num:
+                continue
+            cal_major = "" if f[2] == cf.PLACEHOLDER else f[2]
+            cal_minor = "" if f[3] == cf.PLACEHOLDER else f[3]
+            if not major:                         # whole-segment move
+                match = True
+            elif is_minor:                        # a specific Minor sub-folder
+                match = cal_major == major and cal_minor == minor
+            else:                                 # a Major folder (any Minor under it)
+                match = cal_major == major
+            if match:
+                f[0] = target
+                view.set_fields(f)
+                moved += 1
+        # Re-home empty folder registry entries in the moved branch.
+        target_label = ct.seg_label(target)
+        for entry in list(self.folders):
+            e_seg, e_major, e_minor = entry
+            if e_seg != seg:
+                continue
+            if not major:
+                keep = True
+            elif is_minor:
+                keep = e_major == major and e_minor == minor
+            else:
+                keep = e_major == major
+            if keep:
+                self.folders.discard(entry)
+                self.folders.add((target_label, e_major, e_minor))
+        self._on_edited()
+        self._reload_tree()
+        self.status.showMessage(
+            f"Moved '{what}' ({moved} calibration(s)) to {target_label}")
 
     def _suggest_segment_for_address(self, addr: str, chosen_seg: str) -> str:
         """If the address falls in a different segment than chosen, offer to move
