@@ -86,11 +86,18 @@ def _sanitize_unit(unit: str, field_name: str, rpt: CalReport) -> str:
 
 
 def _hex_to_v8(addr: str) -> str:
-    """V7 bare-hex address -> V8 '$' hex (comma lists preserved)."""
+    """V7 bare-hex address -> V8 '$' hex (comma lists preserved).
+
+    Multi-column calibrations carry a comma-separated address list; some V7
+    tools wrap each address in quotes (e.g. '"1e209c","1e20b0"'). Strip those so
+    the V8 output is '$1e209c,$1e20b0' rather than '$"1e209c",...' (which EFILive
+    rejects as an invalid unsigned integer)."""
     out = []
     for part in addr.split(","):
-        p = part.strip()
-        out.append(f"${p}" if p and not p.startswith("$") else p)
+        p = part.strip().strip('"').strip()
+        if not p:
+            continue
+        out.append(p if p.startswith("$") else f"${p}")
     return ",".join(out)
 
 
