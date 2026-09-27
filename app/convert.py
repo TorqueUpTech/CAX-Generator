@@ -230,7 +230,9 @@ def convert(cax: cf.CaxFile, controller: str, cmap: ControllerMap | None,
 
         # ---- [Data] row ----
         data_rows.append(_row([
-            _quote(cal.id), _hex_to_v8(_f(af, A_ADDR)), colcount, rowcount,
+            # A multi-column address list must be quoted ("$a,$b,...") or EFILive
+            # treats the commas as field separators; a single address stays bare.
+            _quote(cal.id), _quote(_hex_to_v8(_f(af, A_ADDR))), colcount, rowcount,
             _f(sf, S_FACTOR, "1"), _f(sf, S_OFFSET, "0"), _f(af, A_INV, "0"),
             size, dtype, "0",  # DataOffset
             _f(sf, S_MINLIM, DOT), _f(sf, S_MAXLIM, DOT),
