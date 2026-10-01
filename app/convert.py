@@ -85,6 +85,20 @@ def _sanitize_unit(unit: str, field_name: str, rpt: CalReport) -> str:
     return u
 
 
+def _num(v: str, default: str) -> str:
+    """Return v if it is a valid number (or the '.' placeholder), else default.
+    V7 slots occasionally carry a stray unit word (e.g. 'none') where EFILive
+    expects a float; passing that through makes EFILive reject the whole file."""
+    s = (v or "").strip()
+    if s in ("", "."):
+        return default
+    try:
+        float(s)
+        return s
+    except ValueError:
+        return default
+
+
 def _hex_to_v8(addr: str) -> str:
     """V7 bare-hex address -> V8 '$' hex (comma lists preserved).
 
@@ -165,6 +179,13 @@ def convert(cax: cf.CaxFile, controller: str, cmap: ControllerMap | None,
             rpt.v8_seg = hit[0]
         else:
             rpt.v8_seg = cal.seg
+        # V8 segment 99 is EFILive's RESERVED "EFILive Custom Calibrations"
+        # segment (for EFILive's own injected cals). A user-defined cax8 must not
+        # place calibrations there — EFILive rejects the file and falls back to a
+        # flat "Operating System" tree. Remap it to a real user segment (5), which
+        # is what EFILive's own V7toV8_Segments.ini uses for these cals.
+        if rpt.v8_seg == "99":
+            rpt.v8_seg = "5"
             rpt.status = "review"
             rpt.reasons.append("no segment map loaded — V8 segment not verified")
 
@@ -229,13 +250,18 @@ def convert(cax: cf.CaxFile, controller: str, cmap: ControllerMap | None,
                                _enum_name(enum_str))
 
         # ---- [Data] row ----
+        # Numeric fields must be real numbers — a V7 slot can carry a stray unit
+        # word (e.g. Factor="none" on some SED cals), which EFILive rejects as an
+        # "Invalid floating point value" and then fails to load the whole file
+        # (collapsing the tree). Fall back to the field's default when non-numeric.
         data_rows.append(_row([
             # A multi-column address list must be quoted ("$a,$b,...") or EFILive
             # treats the commas as field separators; a single address stays bare.
             _quote(cal.id), _quote(_hex_to_v8(_f(af, A_ADDR))), colcount, rowcount,
-            _f(sf, S_FACTOR, "1"), _f(sf, S_OFFSET, "0"), _f(af, A_INV, "0"),
+            _num(_f(sf, S_FACTOR, "1"), "1"), _num(_f(sf, S_OFFSET, "0"), "0"),
+            _f(af, A_INV, "0"),
             size, dtype, "0",  # DataOffset
-            _f(sf, S_MINLIM, DOT), _f(sf, S_MAXLIM, DOT),
+            _num(_f(sf, S_MINLIM, DOT), DOT), _num(_f(sf, S_MAXLIM, DOT), DOT),
             _quote(units) or DOT, _quote(col_units) or DOT, _quote(row_units) or DOT,
             DOT, DOT, DOT,  # Deposit, Endian, Align -> controller default
         ]))
@@ -245,7 +271,7 @@ def convert(cax: cf.CaxFile, controller: str, cmap: ControllerMap | None,
         cal_rows.append(_row([
             _quote(cal.id), rpt.v8_seg or DOT, _quote(tree) or DOT,
             DOT,                      # Flags (TODO: derive from visibility/group)
-            display, _f(sf, S_MINUSR, DOT), _f(sf, S_MAXUSR, DOT),
+            display, _num(_f(sf, S_MINUSR, DOT), DOT), _num(_f(sf, S_MAXUSR, DOT), DOT),
             enum_ref, DOT,            # Enum, Options
             DOT, _f(sf, S_PREC, "0"), # DataFmt, DPrec
             DOT, DOT, col_ref,        # ColFmt, ColDesc, ColLabels
@@ -253,7 +279,7 @@ def convert(cax: cf.CaxFile, controller: str, cmap: ControllerMap | None,
         ]))
 
         # ---- [Description] ----
-        desc = _description(sec)
+        desc = _clean_description(_description(sec))
         if desc:
             descriptions.append(f"<!-- #{cal.id} {cal.caption} -->\n{desc}")
 
@@ -423,6 +449,23 @@ def _view(sec: cf.Section, idx: int) -> str:
     if v and idx < len(v.fields):
         return v.fields[idx]
     return ""
+
+
+def _clean_description(desc: str) -> str:
+    """Make a description safe for EFILive's cax8 [Description] section.
+
+    EFILive's lexer is line-based: a description line starting with '[' is read
+    as a section header, which truncates the whole [Description] section and
+    orphans every following calibration's description. Strip the square brackets
+    from the description text (keeping the words inside), and escape a leading
+    ';' (which would be read as a comment) as a safety net.
+    """
+    if not desc:
+        return desc
+    desc = desc.replace("[", "").replace("]", "")
+    if desc[:1] == ";":
+        desc = "&#59;" + desc[1:]
+    return desc
 
 
 def _description(sec: cf.Section) -> str:
