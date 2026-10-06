@@ -26,7 +26,7 @@ A_ADDR, A_BITOFF, A_BITS, A_TYPE, A_INV = range(5)
 S_UNITS, S_FACTOR, S_OFFSET, S_PREC, S_MINLIM, S_MAXLIM, S_MINUSR, S_MAXUSR = range(8)
 
 # V7 DisplayType -> V8 Display keyword
-DISPLAY_MAP = {"1": "Value", "2": "Curve", "3": "Map"}
+DISPLAY_MAP = {"1": "Value", "2": "Curve", "3": "Map", "4": "List"}
 DOT = "."
 
 
@@ -186,8 +186,9 @@ def convert(cax: cf.CaxFile, controller: str, cmap: ControllerMap | None,
         # is what EFILive's own V7toV8_Segments.ini uses for these cals.
         if rpt.v8_seg == "99":
             rpt.v8_seg = "5"
-            rpt.status = "review"
-            rpt.reasons.append("no segment map loaded — V8 segment not verified")
+            rpt.status = "review" if rpt.status == "ok" else rpt.status
+            rpt.reasons.append(
+                "V8 seg 99 (EFILive's reserved custom segment) remapped to 5")
 
         addr = sec.get("ADDR")
         slot = sec.get("SI_SLOT")
@@ -199,6 +200,13 @@ def convert(cax: cf.CaxFile, controller: str, cmap: ControllerMap | None,
 
         size = _size_field(_f(af, A_BITOFF, "0"), _f(af, A_BITS, "8"), rpt)
         dtype = _f(af, A_TYPE, "UNM")
+        display = DISPLAY_MAP.get(_view(sec, 5), "Value")
+        # EFILive represents a List calibration as UNM + enum (the enum maps each
+        # raw cell value to a name), never SED. A SED List is a single state
+        # selector, so EFILive builds no cells ("TObjectList<TCal_Item> is empty").
+        # Force UNM for Lists, matching EFILive's own List definitions.
+        if display == "List" and dtype.upper() == "SED":
+            dtype = "UNM"
         # Unitless params (enums/flags/raw counts) are normal — EFILive writes
         # DataUnits "None", not a review flag. Non-canonical units are normalized
         # to valid V8 units (SanitizeUnits.ini) so they don't error in V8.
@@ -227,7 +235,6 @@ def convert(cax: cf.CaxFile, controller: str, cmap: ControllerMap | None,
         # authored with the breakpoints on SI_COL (more col labels than row) is
         # transposed so it renders correctly (RowCount=N, ColCount=1) instead of
         # as a wide 1-row strip.
-        display = DISPLAY_MAP.get(_view(sec, 5), "Value")
         if display == "Curve" and len(col_labels) > len(row_labels):
             col_labels, row_labels = row_labels, col_labels
             col_units, row_units = row_units, col_units
