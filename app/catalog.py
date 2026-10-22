@@ -65,10 +65,19 @@ def standardize(cax, controller: str, add_new: bool = True):
       new_names  = [(name, new_id), ...]  (added to catalog when add_new)
       flags      = [(cur_id, name, cal_seg, cat_seg, cat_id), ...] cross-segment
     Does NOT mutate the sections — call apply_plan() to do that.
+
+    Collision-safe: the final ID of every section is unique within the file. If the catalog would map
+    two sections to the same ID (e.g. two sections that still share a caption, or a caption whose
+    canonical ID is already held by an untouched section), the later section is given a fresh unique ID
+    instead - the tool never emits a duplicate [ID].
     """
     cat = load()
     cmap = dict(cat.get(controller, {}))
+    # sections we never rename (no caption) keep their IDs: reserve them up front so nothing collides.
+    fixed = {s.name for s in cax.sections
+             if ct.cal_from_section(s) is None or not ct.cal_from_section(s).caption}
     reserved = {v[0] for v in cmap.values()} | {s.name for s in cax.sections}
+    taken = set(fixed)                              # final IDs already claimed
     plan, new_names, flags = [], [], []
     for sec in cax.sections:
         cal = ct.cal_from_section(sec)
@@ -79,16 +88,24 @@ def standardize(cax, controller: str, add_new: bool = True):
             cat_id, cat_seg = cmap[name]
             if str(cat_seg) != str(cal.seg):
                 flags.append((sec.name, name, cal.seg, cat_seg, cat_id))
-                continue
-            if sec.name != cat_id:
-                plan.append((sec, sec.name, cat_id))
+                desired = sec.name                  # cross-segment: keep current ID (still guard below)
+            else:
+                desired = cat_id
         elif add_new:
-            nid = _fresh_id(reserved, cal.seg)
-            reserved.add(nid)
-            cmap[name] = [nid, cal.seg]
-            new_names.append((name, nid))
-            if sec.name != nid:
-                plan.append((sec, sec.name, nid))
+            desired = _fresh_id(reserved | taken, cal.seg)
+            cmap[name] = [desired, cal.seg]
+            new_names.append((name, desired))
+        else:
+            desired = sec.name                      # dry run, unknown name: keep current ID
+        if desired in taken:                        # collision guard: canonical ID blocked
+            if sec.name not in taken:               # keep the section's current ID if free (idempotent)
+                desired = sec.name
+            else:                                   # last resort: a fresh unique ID
+                desired = _fresh_id(reserved | taken, cal.seg)
+        taken.add(desired)
+        reserved.add(desired)
+        if sec.name != desired:
+            plan.append((sec, sec.name, desired))
     if add_new and new_names:
         cat[controller] = cmap
         save(cat)
