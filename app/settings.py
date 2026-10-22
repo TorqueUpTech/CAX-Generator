@@ -179,6 +179,18 @@ def v8_unique_id() -> str:
     return f"U{v8_uid_number()}{v8_uid_name()}"
 
 
+def working_format() -> str:
+    """'v7' (default) or 'v8' — the format new files are authored and saved in.
+    'v8' turns on native V8 (.cax8) authoring: New file, Save and the segment
+    tree operate in V8 instead of V7-then-convert."""
+    v = _settings().value("ui/working_format", "v7", str)
+    return v if v in ("v7", "v8") else "v7"
+
+
+def set_working_format(version: str) -> None:
+    _settings().setValue("ui/working_format", "v8" if version == "v8" else "v7")
+
+
 def tree_segment_order() -> str:
     """'v7' (default) or 'v8' — order the segment tree branches by V7 or V8 number."""
     return _settings().value("ui/tree_seg_order", "v7", str)

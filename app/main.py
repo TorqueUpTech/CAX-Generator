@@ -483,7 +483,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.cax: cf.CaxFile | None = None
         self.path: str | None = None
-        self.version: str = formats.DEFAULT_VERSION
+        self.version: str = appsettings.working_format()
         self._dirty = False
         # User-created empty folders: set of (seg_label, major, minor).
         self.folders: set[tuple[str, str, str]] = set()
@@ -707,11 +707,13 @@ class MainWindow(QMainWindow):
             return
         self.cax = cf.CaxFile()
         self.path = None
+        self.version = appsettings.working_format()
         self._dirty = False
         self.folders.clear()
         self._reload_tree()
         self._update_title()
-        self.status.showMessage("New file")
+        self.status.showMessage(
+            f"New {formats.VERSIONS[self.version].label} file")
 
     def open_v8(self):
         """Open a V8 .cax8, defaulting to the configured V8 folder."""
@@ -1316,11 +1318,32 @@ class MainWindow(QMainWindow):
             return (int(v) if v and v.isdigit() else 99, int(n) if n.isdigit() else 99)
         return sorted(ct.SEGMENT_NAMES.keys(), key=key)
 
+    def _current_controller(self) -> str | None:
+        """Controller for the open file, from its OS-number filename."""
+        if not self.path:
+            return None
+        stem = os.path.splitext(os.path.basename(self.path))[0]
+        return segmod.controller_for_os(stem)
+
+    def _seg_names(self) -> dict | None:
+        """V8 per-controller segment names for the tree/authoring when editing a
+        .cax8 natively; None (built-in V7 names) otherwise."""
+        if self.version != "v8":
+            return None
+        ctrl = self._current_controller()
+        names = segmod.v8_segment_names(ctrl) if ctrl else {}
+        return names or None
+
+    def _seg_number(self, label: str) -> str:
+        """Resolve a tree branch label to a segment number, honouring V8 names."""
+        return ct.seg_number(label, self._seg_names())
+
     # ---- tree ----------------------------------------------------------------
     def _reload_tree(self):
         model = QStandardItemModel()
         if self.cax is not None:
-            root = ct.build_tree(self.cax, sorted(self.folders), self._seg_order())
+            root = ct.build_tree(self.cax, sorted(self.folders), self._seg_order(),
+                                 seg_names=self._seg_names())
             for child in root.children.values():
                 self._add_branch(model.invisibleRootItem(), child, depth=1)
         self.tree.setModel(model)
@@ -1379,7 +1402,7 @@ class MainWindow(QMainWindow):
             major = minor = ""
         elif kind == "major":
             minor = ""
-        seg_num = ct.seg_number(seg_label)
+        seg_num = self._seg_number(seg_label)
         moved = 0
         D = cf.PLACEHOLDER
         for name in names:
@@ -1861,7 +1884,7 @@ class MainWindow(QMainWindow):
 
     def _new_cal(self, seg: str, major: str, minor: str):
         """Create a calibration under this folder; folder path fills VIEW fields."""
-        seg_num = ct.seg_number(seg)
+        seg_num = self._seg_number(seg)
         suggested = self._auto_id(seg_num)
         cid, ok = QInputDialog.getText(
             self, "New calibration",
@@ -1927,7 +1950,7 @@ class MainWindow(QMainWindow):
         self.folders.discard((src_seg, src_major, src_minor))
 
         # Update all calibrations in the source folder to the new location
-        src_seg_num = ct.seg_number(src_seg)
+        src_seg_num = self._seg_number(src_seg)
         if self.cax:
             for sec in self.cax.sections:
                 view = sec.get("VIEW")
@@ -1958,7 +1981,8 @@ class MainWindow(QMainWindow):
     def _pick_segment(self, title: str, exclude_label: str = "") -> str | None:
         """Ask the user for a target segment. Returns the segment NUMBER, or None
         if cancelled. Offers the known segments (skipping `exclude_label`)."""
-        pairs = [(num, name) for num, name in ct.SEGMENT_NAMES.items()
+        seg_names = self._seg_names() or ct.SEGMENT_NAMES
+        pairs = [(num, name) for num, name in seg_names.items()
                  if name != exclude_label]
         if not pairs:
             return None
@@ -1994,7 +2018,7 @@ class MainWindow(QMainWindow):
             self._on_edited()
             self._reload_tree()
             self.status.showMessage(
-                f"Moved {moved} calibration(s) to {ct.seg_label(seg_num)}")
+                f"Moved {moved} calibration(s) to {ct.seg_label(seg_num, self._seg_names())}")
 
     def _move_folder_to_segment(self, seg: str, major: str, minor: str):
         """Move every calibration in a folder (or a whole segment when major=="")
@@ -2002,7 +2026,7 @@ class MainWindow(QMainWindow):
         empty user-created folders in that branch."""
         if self.cax is None:
             return
-        src_num = ct.seg_number(seg)
+        src_num = self._seg_number(seg)
         what = minor or major or seg
         target = self._pick_segment(f"Move '{what}' to segment:", exclude_label=seg)
         if target is None or target == src_num:
@@ -2032,7 +2056,7 @@ class MainWindow(QMainWindow):
                 view.set_fields(f)
                 moved += 1
         # Re-home empty folder registry entries in the moved branch.
-        target_label = ct.seg_label(target)
+        target_label = ct.seg_label(target, self._seg_names())
         for entry in list(self.folders):
             e_seg, e_major, e_minor = entry
             if e_seg != seg:
@@ -3269,6 +3293,14 @@ class MainWindow(QMainWindow):
             id_edits[seg] = (tmpl, start)
 
         lay.addRow(QLabel("<b>Behavior</b>"))
+        wfmt_cb = QComboBox()
+        wfmt_cb.addItem("V7.5 (.cax)", "v7")
+        wfmt_cb.addItem("V8 (.cax8)", "v8")
+        wfmt_cb.setCurrentIndex(1 if appsettings.working_format() == "v8" else 0)
+        wfmt_cb.setToolTip("Format that New file authors and saves in. V8 edits "
+                           ".cax8 natively (native segment names, Save → .cax8).")
+        lay.addRow("Default working format:", wfmt_cb)
+
         suggest_cb = QCheckBox("Suggest correct segment from address when creating "
                                "a calibration")
         suggest_cb.setChecked(appsettings.suggest_segment_enabled())
@@ -3322,6 +3354,7 @@ class MainWindow(QMainWindow):
         outer.addWidget(save)
 
         def commit():
+            appsettings.set_working_format(wfmt_cb.currentData())
             appsettings.set_suggest_segment_enabled(suggest_cb.isChecked())
             appsettings.set_tree_segment_order(order_cb.currentData())
             if editor_edit.text().strip():

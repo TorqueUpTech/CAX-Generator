@@ -86,12 +86,21 @@ def cal_from_section(sec: Section) -> CalNode | None:
 SEG_BY_LABEL = {name: num for num, name in SEGMENT_NAMES.items()}
 
 
-def seg_label(seg: str) -> str:
+def seg_label(seg: str, seg_names: dict | None = None) -> str:
+    """Segment number -> friendly name. `seg_names` (V8 per-controller names)
+    takes precedence over the built-in V7 names when supplied."""
+    if seg_names and seg in seg_names:
+        return seg_names[seg]
     return SEGMENT_NAMES.get(seg, f"Segment {seg}" if seg else "(no segment)")
 
 
-def seg_number(label: str) -> str:
-    """Branch label -> segment number ('' if not a known segment)."""
+def seg_number(label: str, seg_names: dict | None = None) -> str:
+    """Branch label -> segment number ('' if not a known segment). Resolves
+    against `seg_names` (V8) first, then the built-in V7 names."""
+    if seg_names:
+        for num, name in seg_names.items():
+            if name == label:
+                return num
     if label in SEG_BY_LABEL:
         return SEG_BY_LABEL[label]
     if label.startswith("Segment "):
@@ -140,7 +149,8 @@ def suggest_segment(cax: CaxFile, addr: int, current_seg: str,
 
 
 def build_tree(cax: CaxFile, extra_folders: list[tuple[str, str, str]] | None = None,
-               seg_order: list | None = None) -> Branch:
+               seg_order: list | None = None,
+               seg_names: dict | None = None) -> Branch:
     """Return a synthetic root Branch holding the whole Navigator tree.
 
     All known segments are shown by default (even empty) so the user can create
@@ -148,19 +158,26 @@ def build_tree(cax: CaxFile, extra_folders: list[tuple[str, str, str]] | None = 
     (seg_label, major, minor) user-created empty folders to keep visible.
     `seg_order` is an optional list of V7 segment numbers giving the branch order
     (used to order by V8 instead of V7); segment names are unchanged.
+    `seg_names` is an optional {segment number -> name} map (the controller's V8
+    segment names) used to label and seed branches instead of the built-in V7
+    names — for native V8 editing.
     Sections without a VIEW ([OS]/malformed) collect under '(no VIEW)'.
     """
     root = Branch("Calibrations")
     # Seed every known segment (in the requested order) so they always appear.
-    for num in (seg_order or list(SEGMENT_NAMES)):
-        root.child(SEGMENT_NAMES.get(num, seg_label(num)))
+    if seg_names:
+        seed = sorted(seg_names, key=lambda n: int(n) if str(n).isdigit() else 999)
+    else:
+        seed = seg_order or list(SEGMENT_NAMES)
+    for num in seed:
+        root.child(seg_label(num, seg_names))
     for sec in cax.sections:
         cal = cal_from_section(sec)
         if cal is None:
             root.child("(no VIEW)").cals.append(
                 CalNode(sec, sec.name, "", "", "", "unknown"))
             continue
-        node = root.child(seg_label(cal.seg))
+        node = root.child(seg_label(cal.seg, seg_names))
         if cal.major:
             node = node.child(cal.major)
         if cal.minor:
