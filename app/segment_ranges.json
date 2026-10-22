@@ -5060,14 +5060,50 @@
     ]
   },
   "24271208": {
-    "controller": "T87A",
+    "controller": "T87",
     "segments": [
+      {
+        "name": "Boot Block",
+        "ranges": [
+          [
+            114688,
+            196607
+          ]
+        ]
+      },
+      {
+        "name": "OS",
+        "ranges": [
+          [
+            1048576,
+            4194303
+          ]
+        ]
+      },
+      {
+        "name": "Trans",
+        "ranges": [
+          [
+            524288,
+            1032191
+          ]
+        ]
+      },
+      {
+        "name": "TransDiag",
+        "ranges": [
+          [
+            1032192,
+            1043455
+          ]
+        ]
+      },
       {
         "name": "System",
         "ranges": [
           [
-            16514,
-            7383138
+            1043456,
+            1048575
           ]
         ]
       }
@@ -5715,6 +5751,56 @@
     ]
   },
   "24285377": {
+    "controller": "T87A",
+    "segments": [
+      {
+        "name": "Boot Block",
+        "ranges": [
+          [
+            131072,
+            262143
+          ]
+        ]
+      },
+      {
+        "name": "OS",
+        "ranges": [
+          [
+            1572864,
+            3145695
+          ]
+        ]
+      },
+      {
+        "name": "Trans",
+        "ranges": [
+          [
+            524288,
+            1568495
+          ]
+        ]
+      },
+      {
+        "name": "TransDiag",
+        "ranges": [
+          [
+            1568496,
+            1568575
+          ]
+        ]
+      },
+      {
+        "name": "System",
+        "ranges": [
+          [
+            1568576,
+            1572847
+          ]
+        ]
+      }
+    ]
+  },
+  "24291281": {
     "controller": "T87A",
     "segments": [
       {
